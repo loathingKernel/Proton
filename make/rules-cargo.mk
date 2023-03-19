@@ -13,8 +13,6 @@ $$(OBJ)/.$(1)-configure$(3):
 $$(OBJ)/.$(1)-build$(3):
 	@echo ":: building $(3)bit $(1)..." >&2
 	cd $$($(2)_SRC) && env $$($(2)_ENV$(3)) \
-	cargo update --locked --offline --verbose --workspace
-	cd $$($(2)_SRC) && env $$($(2)_ENV$(3)) \
 	cargo build \
 	      -j$$(SUBJOBS) --locked --offline --verbose \
 	      --target "$$(CARGO_TARGET_$(3))" \
