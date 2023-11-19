@@ -396,6 +396,8 @@ FFMPEG_CONFIGURE_ARGS := \
 	--disable-everything \
 	--disable-programs \
 	--disable-doc \
+	--enable-decoders \
+	--enable-demuxers \
 	--enable-decoder=indeo5 \
 	--enable-decoder=adpcm_ms \
 	--enable-decoder=mpegvideo \
