@@ -1,13 +1,45 @@
 diff --git a/Makefile.in b/Makefile.in
-index 256acc2b..ece080f0 100644
+index 3d69e90c..1a139745 100644
 --- a/Makefile.in
 +++ b/Makefile.in
-@@ -53,7 +53,7 @@ CROSSLDFLAGS   += -Wl,--file-alignment,4096
- OPTIMIZE_FLAGS := -O2 -march=nocona -mtune=core-avx2 -mfpmath=sse
+@@ -49,13 +49,14 @@ else
+     MESON_STRIP_ARG := --strip
+ endif
+ 
++V3_FLAGS       := -mcx16 -msahf -mpopcnt -msse4.1 -msse4.2 -mssse3 -mavx -mbmi -mf16c -mfma -mlzcnt -mmovbe -mxsave
+ CROSSLDFLAGS   += -Wl,--file-alignment,4096
+-OPTIMIZE_FLAGS := -O2 -march=nocona -mtune=core-avx2 -mfpmath=sse
++OPTIMIZE_FLAGS := -O2 -march=nocona -mtune=core-avx2 -mfpmath=sse $(V3_FLAGS)
  SANITY_FLAGS   := -fwrapv -fno-strict-aliasing
  DEBUG_FLAGS    := -ggdb -ffunction-sections -fdata-sections -fno-omit-frame-pointer
 -COMMON_FLAGS    = $(DEBUG_FLAGS) $(OPTIMIZE_FLAGS) $(SANITY_FLAGS) -ffile-prefix-map=$(CCACHE_BASEDIR)=.
+-COMMON_FLAGS32 := -mstackrealign
+-COMMON_FLAGS64 := -mcmodel=small
 +COMMON_FLAGS    = -s $(OPTIMIZE_FLAGS) $(SANITY_FLAGS) -ffile-prefix-map=$(CCACHE_BASEDIR)=.
- COMMON_FLAGS32 := -mstackrealign
- COMMON_FLAGS64 := -mcmodel=small
++COMMON_FLAGS32 := -mstackrealign -mno-avx2 -mno-avx
++COMMON_FLAGS64 := -mcmodel=small -mno-avx2
  CARGO_BUILD_ARGS += --release
+ 
+ ifneq ($(SUPPRESS_WARNINGS),)
+@@ -275,6 +276,11 @@ FFMPEG_CONFIGURE_ARGS := \
+ 	--enable-decoder=aac \
+ 	--enable-demuxer=xwma
+ 
++FFMPEG_LTO_OPTS64 := --disable-inline-asm
++FFMPEG_LTO_OPTS32 := --disable-inline-asm
++FFMPEG_CONFIGURE_ARGS64 = --optflags="$(COMMON_FLAGS) $(COMMON_FLAGS64)" $(FFMPEG_LTO_OPTS64)
++FFMPEG_CONFIGURE_ARGS32 = --optflags="$(COMMON_FLAGS) $(COMMON_FLAGS32)" $(FFMPEG_LTO_OPTS32)
++
+ $(eval $(call rules-source,ffmpeg,$(SRCDIR)/ffmpeg))
+ $(eval $(call rules-configure,ffmpeg,32))
+ $(eval $(call rules-configure,ffmpeg,64))
+@@ -598,6 +604,9 @@ OPENFST_CONFIGURE_ARGS = \
+   --with-pic \
+   --disable-bin \
+ 
++OPENFST_CFLAGS = -mno-bmi2
++OPENFST_CXXFLAGS = -mno-bmi2
++
+ $(eval $(call rules-source,openfst,$(SRCDIR)/openfst))
+ $(eval $(call rules-autoconf,openfst,32))
+ $(eval $(call rules-autoconf,openfst,64))
