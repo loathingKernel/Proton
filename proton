@@ -40,7 +40,7 @@ from random import randrange
 #To enable debug logging, copy "user_settings.sample.py" to "user_settings.py"
 #and edit it if needed.
 
-CURRENT_PREFIX_VERSION="8.0-103"
+CURRENT_PREFIX_VERSION="ULWGL-Proton-8.0-103"
 
 PFX="Proton: "
 ld_path_var = "LD_LIBRARY_PATH"
@@ -428,28 +428,27 @@ class Proton:
     def path(self, d):
         return self.base_dir + d
 
-    def need_tarball_extraction(self):
-        '''Checks if the proton_dist tarball archive must be extracted. Returns true if extraction is needed, false otherwise'''
-        return not file_exists(self.dist_dir, follow_symlinks=True) or \
-            not file_exists(self.path("dist/version"), follow_symlinks=True) or \
-            not filecmp.cmp(self.version_file, self.path("dist/version"))
+    def do_steampipe_fixups(self):
+        fixups_json = self.path("steampipe_fixups.json")
+        fixups_mtime = self.path("dist/steampipe_fixups_mtime")
 
-    def extract_tarball(self):
-        with self.dist_lock:
-            if self.need_tarball_extraction():
-                if file_exists(self.dist_dir, follow_symlinks=True):
-                    shutil.rmtree(self.dist_dir)
-                tar = None
-                for sf in ["", ".xz", ".bz2", ".gz"]:
-                    if file_exists(self.path("proton_dist.tar" + sf), follow_symlinks=True):
-                        tar = tarfile.open(self.path("proton_dist.tar" + sf), mode="r:*")
-                        break
-                if not tar:
-                    log("No proton_dist tarball??")
-                    sys.exit(1)
-                tar.extractall(path=self.dist_dir)
-                tar.close()
-                try_copy(self.version_file, self.dist_dir)
+        if file_exists(fixups_json, follow_symlinks=True):
+            with self.dist_lock:
+                import steampipe_fixups
+
+                current_fixup_mtime = None
+                if file_exists(fixups_mtime, follow_symlinks=True):
+                    with open(fixups_mtime, "r") as f:
+                        current_fixup_mtime = f.readline().strip()
+
+                new_fixup_mtime = getmtimestr(fixups_json)
+
+                if current_fixup_mtime != new_fixup_mtime:
+                    result_code = steampipe_fixups.do_restore(self.base_dir, fixups_json)
+
+                    if result_code == 0:
+                        with open(fixups_mtime, "w") as f:
+                            f.write(new_fixup_mtime + "\n")
 
     def missing_default_prefix(self):
         '''Check if the default prefix dir is missing. Returns true if missing, false if present'''
@@ -508,12 +507,6 @@ class CompatData:
         log("Upgrading prefix from " + str(old_ver) + " to " + CURRENT_PREFIX_VERSION + " (" + self.base_dir + ")")
 
         if old_ver is None:
-            return
-
-        if not '-' in old_ver:
-            #How can this happen??
-            log("Prefix has an invalid version?! You may want to back up user files and delete this prefix.")
-            #If it does, just let the Wine upgrade happen and hope it works...
             return
 
         try:
@@ -1695,6 +1688,12 @@ class Session:
         # CoD: Black Ops 3 workaround
         if os.environ.get("SteamGameId", 0) == "311210":
             argv = [g_proton.wine_bin, "c:\\Program Files (x86)\\Steam\\steam.exe"]
+        # Don't use steam if it's not a steam game
+        # Prevent this warning for non-steam games:
+        # [S_API FAIL] SteamAPI_Init() failed; no appID found.
+        # Either launch the game from Steam, or put the file steam_appid.txt containing the correct appID in your game folder.
+        elif "ULWGL_ID" in os.environ:
+            argv = [g_proton.wine64_bin]
         else:
             argv = [g_proton.wine64_bin, "c:\\windows\\system32\\steam.exe"]
 
@@ -1718,8 +1717,7 @@ if __name__ == "__main__":
 
     g_proton = Proton(os.path.dirname(sys.argv[0]))
 
-    if g_proton.need_tarball_extraction():
-        g_proton.extract_tarball()
+    g_proton.do_steampipe_fixups()
 
     g_compatdata = CompatData(os.environ["STEAM_COMPAT_DATA_PATH"])
 
@@ -1727,10 +1725,15 @@ if __name__ == "__main__":
 
     g_session.init_wine()
 
+    # This is needed for protonfixes
+    os.environ["PROTON_DLL_COPY"] = "*"
+
     if g_proton.missing_default_prefix():
         g_proton.make_default_prefix()
 
     g_session.init_session(sys.argv[1] != "runinprefix")
+
+    import protonfixes
 
     #determine mode
     rc = 0
