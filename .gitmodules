@@ -1,9 +1,9 @@
 [submodule "wine"]
 	path = wine
-	url = ../wine
+	url = https://github.com/ValveSoftware/wine
 [submodule "dxvk"]
 	path = dxvk
-	url = ../dxvk
+	url = https://github.com/ValveSoftware/dxvk
 [submodule "openvr"]
 	path = openvr
 	url = https://github.com/ValveSoftware/openvr
@@ -55,3 +55,6 @@
 [submodule "glslang"]
 	path = glslang
 	url = https://github.com/KhronosGroup/glslang
+[submodule "protonfixes"]
+        path = protonfixes
+	url = https://github.com/Open-Wine-Components/ULWGL-protonfixes

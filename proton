@@ -40,7 +40,7 @@ from random import randrange
 #To enable debug logging, copy "user_settings.sample.py" to "user_settings.py"
 #and edit it if needed.
 
-CURRENT_PREFIX_VERSION="8.0-103"
+CURRENT_PREFIX_VERSION="ULWGL-Proton-8.0-103"
 
 PFX="Proton: "
 ld_path_var = "LD_LIBRARY_PATH"
@@ -1727,10 +1727,15 @@ if __name__ == "__main__":
 
     g_session.init_wine()
 
+    # This is needed for protonfixes
+    os.environ["PROTON_DLL_COPY"] = "*"
+
     if g_proton.missing_default_prefix():
         g_proton.make_default_prefix()
 
     g_session.init_session(sys.argv[1] != "runinprefix")
+
+    import protonfixes
 
     #determine mode
     rc = 0
