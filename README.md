@@ -1,3 +1,34 @@
+ULWGL Specific changes
+------------
+
+A few key game fix patches ported from proton-ge:
+
+- Assetto corsa hud fix
+- file search workaround for Phantasy Star Online 2 (WINE_NO_OPEN_FILE_SEARCH)"
+- Star Citizen EAC patch wrapped around SteamGameId=starcitizen envvar"
+
+Pending upstream proton Farlight 84 patch:
+
+https://github.com/ValveSoftware/Proton/issues/6717
+https://gitlab.winehq.org/wine/wine/-/merge_requests/4428
+
+Backported Rainbow Six Siege patch from upstream WINE (still not working due to anti-cheat):
+
+https://gitlab.winehq.org/wine/wine/-/merge_requests/3777
+
+Pending upstream proton Yakuza 5 cutscenes patch:
+
+https://github.com/ValveSoftware/wine/pull/205
+https://github.com/ValveSoftware/Proton/issues/4625
+
+ULWGL-Protonfixes integration:
+
+https://github.com/Open-Wine-Components/ULWGL-Proton/blob/e37b76399114058d30123f494307d84b83efcaf3/proton#L1695
+https://github.com/Open-Wine-Components/ULWGL-Proton/blob/e37b76399114058d30123f494307d84b83efcaf3/proton#L1728
+https://github.com/Open-Wine-Components/ULWGL-Proton/blob/e37b76399114058d30123f494307d84b83efcaf3/proton#L1736
+https://github.com/Open-Wine-Components/ULWGL-protonfixes
+https://github.com/Open-Wine-Components/ULWGL-database/blob/main/ULWGL-database.csv
+
 Introduction
 ------------
 
