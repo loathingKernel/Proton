@@ -1303,6 +1303,7 @@ class Session:
 
         self.env["GST_PLUGIN_SYSTEM_PATH_1_0"] = g_proton.lib64_dir + "gstreamer-1.0" + ":" + g_proton.lib_dir + "gstreamer-1.0"
         self.env["WINE_GST_REGISTRY_DIR"] = g_compatdata.path("gstreamer-1.0/")
+        self.env["GST_GL_WINDOW"] = "surfaceless"
 
         if "STEAM_COMPAT_MEDIA_PATH" in os.environ:
             old_audiofoz_path = os.environ["STEAM_COMPAT_MEDIA_PATH"] + "/audio.foz"
@@ -1693,7 +1694,12 @@ class Session:
         # [S_API FAIL] SteamAPI_Init() failed; no appID found.
         # Either launch the game from Steam, or put the file steam_appid.txt containing the correct appID in your game folder.
         elif "ULWGL_ID" in os.environ:
-            argv = [g_proton.wine64_bin]
+            if os.environ.get("WINEPREFIX", 0) in str(sys.argv[2:]):
+                log("Executable is inside wine prefix, launching normally.")
+                argv = [g_proton.wine64_bin]
+            else:
+                log("Executable is outside wine prefix, launching with /unix option.")
+                argv = [g_proton.wine64_bin, "start", "/unix"]
         else:
             argv = [g_proton.wine64_bin, "c:\\windows\\system32\\steam.exe"]
 

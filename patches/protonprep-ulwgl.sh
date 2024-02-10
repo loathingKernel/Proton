@@ -1,6 +1,19 @@
 #!/bin/bash
 
-### WINE PATCHING ###
+### (1) PREP SECTION ###
+
+    pushd gstreamer
+    git reset --hard HEAD
+    git clean -xdf
+
+    echo "GSTREAMER: fix for unclosable invisible wayland opengl windows in taskbar"
+    patch -Np1 < ../patches/gstreamer/5509.patch
+    patch -Np1 < ../patches/gstreamer/5511.patch
+    popd
+
+### END PREP SECTION ###
+
+### (2) WINE PATCHING ###
 
     pushd wine
 
