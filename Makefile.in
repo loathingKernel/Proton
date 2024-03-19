@@ -295,6 +295,127 @@ $(OBJ)/.gst_plugins_rs-post-build32:
 	cp -a $(GST_PLUGINS_RS_OBJ32)/i686-unknown-linux-gnu/release/libgstdav1d.so $(GST_PLUGINS_RS_DST32)/lib/gstreamer-1.0/
 	touch $@
 
+##
+## gst-plugins-bad
+##
+
+GST_BAD_MESON_ARGS := \
+	-Dauto_features=disabled \
+	-Daccurip=enabled \
+	-Dadpcmdec=enabled \
+	-Dadpcmenc=enabled \
+	-Daiff=enabled \
+	-Dasfmux=enabled \
+	-Daudiobuffersplit=enabled \
+	-Daudiofxbad=enabled \
+	-Daudiomixmatrix=enabled \
+	-Daudiolatency=enabled \
+	-Daudiovisualizers=enabled \
+	-Dautoconvert=enabled \
+	-Dbayer=enabled \
+	-Dcamerabin2=enabled \
+	-Dcodecalpha=enabled \
+	-Dcodectimestamper=enabled \
+	-Dcoloreffects=enabled \
+	-Ddebugutils=enabled \
+	-Ddvbsubenc=enabled \
+	-Ddvbsuboverlay=enabled \
+	-Ddvdspu=enabled \
+	-Dfaceoverlay=enabled \
+	-Dfestival=enabled \
+	-Dfieldanalysis=enabled \
+	-Dfreeverb=enabled \
+	-Dfrei0r=enabled \
+	-Dgaudieffects=enabled \
+	-Dgdp=enabled \
+	-Dgeometrictransform=enabled \
+	-Did3tag=enabled \
+	-Dinter=enabled \
+	-Dinterlace=enabled \
+	-Divfparse=enabled \
+	-Divtc=enabled \
+	-Djp2kdecimator=enabled \
+	-Djpegformat=enabled \
+	-Dlibrfb=enabled \
+	-Dmidi=enabled \
+	-Dmpegdemux=enabled \
+	-Dmpegpsmux=enabled \
+	-Dmpegtsdemux=enabled \
+	-Dmpegtsmux=enabled \
+	-Dmxf=enabled \
+	-Dnetsim=enabled \
+	-Donvif=enabled \
+	-Dpcapparse=enabled \
+	-Dpnm=enabled \
+	-Dproxy=enabled \
+	-Drawparse=enabled \
+	-Dremovesilence=enabled \
+	-Drist=enabled \
+	-Drtmp2=enabled \
+	-Drtp=enabled \
+	-Dsdp=enabled \
+	-Dsegmentclip=enabled \
+	-Dsiren=enabled \
+	-Dsmooth=enabled \
+	-Dspeed=enabled \
+	-Dsubenc=enabled \
+	-Dswitchbin=enabled \
+	-Dtimecode=enabled \
+	-Dtranscode=enabled \
+	-Dvideofilters=enabled \
+	-Dvideoframe_audiolevel=enabled \
+	-Dvideoparsers=enabled \
+	-Dvideosignal=enabled \
+	-Dvmnc=enabled \
+	-Dy4m=enabled \
+	-Ddvb=enabled \
+	-Dgtk3=enabled \
+	-Dipcpipeline=enabled \
+	-Dkms=enabled \
+	-Dshm=enabled \
+	-Duvch264=enabled \
+	-Dv4l2codecs=enabled \
+	-Daes=enabled \
+	-Dbz2=enabled \
+	-Dclosedcaption=enabled \
+	-Dcolormanagement=enabled \
+	-Ddash=enabled \
+	-Ddtls=enabled \
+	-Dhls=enabled \
+	-Dopenal=enabled \
+	-Dopus=enabled \
+	-Dsctp=enabled \
+	-Dsmoothstreaming=enabled \
+	-Dsndfile=enabled \
+	-Dttml=enabled \
+	-Dwayland=enabled \
+	-Dx11=enabled \
+	-Dwebp=enabled \
+	-Dorc=enabled
+
+GST_BAD_DEPENDS = gst_orc gstreamer gst_base
+
+$(eval $(call rules-source,gst_bad,$(SRCDIR)/gstreamer/subprojects/gst-plugins-bad))
+$(eval $(call rules-meson,gst_bad,32))
+$(eval $(call rules-meson,gst_bad,64))
+
+##
+## gst-plugins-ugly
+##
+
+GST_UGLY_MESON_ARGS := \
+	-Dauto_features=disabled \
+	-Dasfdemux=enabled \
+	-Ddvdlpcmdec=enabled \
+	-Ddvdsub=enabled \
+	-Drealmedia=enabled \
+	-Dorc=enabled
+
+GST_UGLY_DEPENDS = gst_orc gstreamer gst_base
+
+$(eval $(call rules-source,gst_ugly,$(SRCDIR)/gstreamer/subprojects/gst-plugins-ugly))
+$(eval $(call rules-meson,gst_ugly,32))
+$(eval $(call rules-meson,gst_ugly,64))
 
 ##
 ## Vulkan-Headers
