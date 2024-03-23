@@ -40,7 +40,7 @@ from random import randrange
 #To enable debug logging, copy "user_settings.sample.py" to "user_settings.py"
 #and edit it if needed.
 
-CURRENT_PREFIX_VERSION="9.0-200"
+CURRENT_PREFIX_VERSION="ULWGL-Proton-9.0-200-1"
 
 PFX="Proton: "
 ld_path_var = "LD_LIBRARY_PATH"
@@ -229,9 +229,9 @@ def copyfile_reflink(srcname, dstname):
                 while bytes_to_copy > 0:
                     bytes_to_copy -= copy_file_range(src.fileno(), dst.fileno(), bytes_to_copy)
         except OSError as e:
-            if e.errno not in (errno.EXDEV, errno.ENOSYS, errno.EINVAL):
+            if e.errno not in (errno.EXDEV, errno.ENOSYS, errno.EINVAL, errno.EOPNOTSUPP):
                 raise e
-            if e.errno == errno.ENOSYS:
+            if e.errno == errno.ENOSYS or e.errno == errno.EOPNOTSUPP:
                 copyfile = shutil.copyfile
             shutil.copyfile(srcname, dstname)
 
@@ -952,13 +952,10 @@ class CompatData:
                     g_session.dlloverrides[f] = "n"
 
                 for f in vkd3d_protonfiles:
-                    optional = False
-                    if f == "d3d12core":
-                        optional = True
                     try_copy(g_proton.lib64_dir + "wine/vkd3d-proton/" + f + ".dll", "drive_c/windows/system32",
-                            prefix=self.prefix_dir, track_file=tracked_files, link_debug=True, optional=optional)
+                            prefix=self.prefix_dir, track_file=tracked_files, link_debug=True)
                     try_copy(g_proton.lib_dir + "wine/vkd3d-proton/" + f + ".dll", "drive_c/windows/syswow64",
-                            prefix=self.prefix_dir, track_file=tracked_files, link_debug=True, optional=optional)
+                            prefix=self.prefix_dir, track_file=tracked_files, link_debug=True)
                     g_session.dlloverrides[f] = "n"
 
                 # If the user requested the NVAPI be available, copy it into place.
@@ -1020,6 +1017,9 @@ def default_compat_config():
                 "1359980", #POSTAL: Brain Damaged
                 "1766430", #POSTAL Brain Damaged Demo
                 "692890", #Roboquest
+                "794260", #Outward: Definitive Edition
+                "1328350", #Turbo Overkill
+                "2001540", #Slayers X Demo
 
                 #affected by CW bug 19741
                 "1017900", #Age of Empires: Definitive Edition
@@ -1074,10 +1074,7 @@ def default_compat_config():
                 ]:
             ret.add("noopwr")
 
-        if appid in [
-                "1621680",
-                "359870",
-                ]:
+        if appid == "1621680":
             ret.add("noforcelgadd")
 
         if appid in [
@@ -1110,11 +1107,24 @@ def default_compat_config():
             ret.add("heapdelayfree")
 
         if appid in [
+                "21980", #Call of Juarez: Bound in Blood
+                "553850", #Helldivers 2
+                ]:
+            ret.add("heapzeromemory")
+
+        if appid in [
                 "2630", #Call of Duty 2
                 "1060210", #Disaster Report 4: Summer Memories
                 ]:
             ret.add("nofsync")
             ret.add("noesync")
+
+        if appid in [
+                "1237970", #Titanfall 2
+                ]:
+            for idx, arg in enumerate(sys.argv):
+                if '-northstar' in arg:
+                    ret.add("northstar")
 
         if appid in [
                 # disable dxvknvapi for titles which dislike it
@@ -1124,8 +1134,15 @@ def default_compat_config():
                 "1939100", #Go Home Annie
                 "108710", #Alan Wake
                 "435150", #Divinity: Original Sin 2 - Definitive Edition
+                "2420110", #Horizon Forbidden West
+                "505170", #Carmageddon: Max Damage
                 ]:
             ret.add("disablenvapi")
+
+        if appid in [
+                "2395210" #Tony Hawk's Pro Skater 1 + 2
+                ]:
+            ret.add("forcenvapi")
 
         if appid in [
                 "2395210" #Tony Hawk's Pro Skater 1 + 2
@@ -1201,6 +1218,7 @@ class Session:
 
         self.env["GST_PLUGIN_SYSTEM_PATH_1_0"] = g_proton.lib64_dir + "gstreamer-1.0" + ":" + g_proton.lib_dir + "gstreamer-1.0"
         self.env["WINE_GST_REGISTRY_DIR"] = g_compatdata.path("gstreamer-1.0/")
+        self.env["GST_GL_WINDOW"] = "surfaceless"
 
         if "STEAM_COMPAT_MEDIA_PATH" in os.environ:
             old_audiofoz_path = os.environ["STEAM_COMPAT_MEDIA_PATH"] + "/audio.foz"
@@ -1277,6 +1295,7 @@ class Session:
         if "PROTON_LOG" in self.env and nonzero(self.env["PROTON_LOG"]):
             self.env.setdefault("WINEDEBUG", "+timestamp,+pid,+tid,+seh,+unwind,+threadname,+debugstr,+loaddll,+mscoree")
             self.env.setdefault("DXVK_LOG_LEVEL", "info")
+            self.env.setdefault("DXVK_NVAPI_LOG_LEVEL", "info")
             self.env.setdefault("VKD3D_DEBUG", "warn")
             self.env.setdefault("VKD3D_SHADER_DEBUG", "fixme")
             self.env.setdefault("WINE_MONO_TRACE", "E:System.NotImplementedException")
@@ -1297,9 +1316,12 @@ class Session:
             self.compat_config.add("wined3d")
 
         if not self.check_environment("PROTON_USE_WINED3D", "wined3d"):
-            self.check_environment("PROTON_USE_WINED3D11", "wined3d")
+            if not self.check_environment("PROTON_USE_WINED3D11", "wined3d"):
+                self.check_environment("PROTON_USE_WINED3D9",  "wined3d9")
+        self.check_environment("PROTON_NO_D3D12", "nod3d12")
         self.check_environment("PROTON_NO_D3D11", "nod3d11")
         self.check_environment("PROTON_NO_D3D10", "nod3d10")
+        self.check_environment("PROTON_NO_D9VK",  "nod3d9")
         self.check_environment("PROTON_NO_ESYNC", "noesync")
         self.check_environment("PROTON_NO_FSYNC", "nofsync")
         self.check_environment("PROTON_FORCE_LARGE_ADDRESS_AWARE", "forcelgadd")
@@ -1311,6 +1333,7 @@ class Session:
         self.check_environment("PROTON_SET_STEAM_DRIVE", "steamdrive")
         self.check_environment("PROTON_NO_XIM", "noxim")
         self.check_environment("PROTON_HEAP_DELAY_FREE", "heapdelayfree")
+        self.check_environment("PROTON_HEAP_ZERO_MEMORY", "heapzeromemory")
         self.check_environment("PROTON_DISABLE_NVAPI", "disablenvapi")
         self.check_environment("PROTON_FORCE_NVAPI", "forcenvapi")
         self.check_environment("PROTON_HIDE_APU", "hideapu")
@@ -1346,8 +1369,14 @@ class Session:
         if "heapdelayfree" in self.compat_config:
             self.env["WINE_HEAP_DELAY_FREE"] = "1"
 
+        if "heapzeromemory" in self.compat_config:
+            self.env["WINE_HEAP_ZERO_MEMORY"] = "1"
+
         if "vkd3dbindlesstb" in self.compat_config:
             append_to_env_str(self.env, "VKD3D_CONFIG", "force_bindless_texel_buffer", ",")
+
+        if "northstar" in self.compat_config:
+            append_to_env_str(self.env, "WINEDLLOVERRIDES", "wsock32=n,b", ";")
 
         if "vkd3dfl12" in self.compat_config:
             if not "VKD3D_FEATURE_LEVEL" in self.env:
@@ -1422,6 +1451,11 @@ class Session:
         if update_prefix_files:
             g_compatdata.setup_prefix()
 
+        if "nod3d12" in self.compat_config:
+            self.dlloverrides["d3d12"] = ""
+            if "dxgi" in self.dlloverrides:
+                del self.dlloverrides["dxgi"]
+
         if "nod3d11" in self.compat_config:
             self.dlloverrides["d3d11"] = ""
             if "dxgi" in self.dlloverrides:
@@ -1434,6 +1468,13 @@ class Session:
 
         if "nativevulkanloader" in self.compat_config:
             self.dlloverrides["vulkan-1"] = "n"
+
+        if "nod3d9" in self.compat_config:
+            self.dlloverrides["d3d9"] = ""
+            self.dlloverrides["dxgi"] = ""
+
+        if "wined3d9" in self.compat_config:
+            self.dlloverrides["d3d9"] = "b"
 
         if "disablenvapi" not in self.compat_config or "forcenvapi" in self.compat_config:
             self.env["DXVK_ENABLE_NVAPI"] = "1"
@@ -1475,6 +1516,18 @@ class Session:
         # CoD: Black Ops 3 workaround
         if os.environ.get("SteamGameId", 0) == "311210":
             argv = [g_proton.wine_bin, "c:\\Program Files (x86)\\Steam\\steam.exe"]
+        # Don't use steam if it's not a steam game
+        # Prevent this warning for non-steam games:
+        # [S_API FAIL] SteamAPI_Init() failed; no appID found.
+        # Either launch the game from Steam, or put the file steam_appid.txt containing the correct appID in your game folder.
+        elif "UMU_ID" in os.environ:
+            log(sys.argv[2])
+            if len(sys.argv) >=  3 and sys.argv[2].startswith('/'):
+                log("Executable a unix path, launching with /unix option.")
+                argv = [g_proton.wine64_bin, "start", "/unix"]
+            else:
+                log("Executable is inside wine prefix, launching normally.")
+                argv = [g_proton.wine64_bin]
         else:
             argv = [g_proton.wine64_bin, "c:\\windows\\system32\\steam.exe"]
 
@@ -1507,10 +1560,15 @@ if __name__ == "__main__":
 
     g_session.init_wine()
 
+    # This is needed for protonfixes
+    os.environ["PROTON_DLL_COPY"] = "*"
+
     if g_proton.missing_default_prefix():
         g_proton.make_default_prefix()
 
     g_session.init_session(sys.argv[1] != "runinprefix")
+
+    import protonfixes
 
     #determine mode
     rc = 0

@@ -165,6 +165,7 @@ GST_BASE_MESON_ARGS := \
 	-Dx11=enabled \
 	-Dgl=enabled \
 	-Dgl-graphene=enabled \
+	-Dgl_winsys=surfaceless,x11,wayland,egl \
 	-Dgl_platform=glx,egl \
 	--wrap-mode nodownload \
 
@@ -394,7 +395,6 @@ WINE_SOURCE_ARGS = \
   --exclude dlls/winevulkan/winevulkan.spec
 
 WINE_CONFIGURE_ARGS = \
-  --enable-werror \
   --with-mingw \
   --disable-tests
 
@@ -933,11 +933,11 @@ DIST_GECKO64 := $(OBJ)/.gecko-dist64
 
 $(SRC)/contrib/$(GECKO64_TARBALL):
 	mkdir -p $(dir $@)
-	wget -O $@ $(GECKO64_TARBALL_URL)
+	wget --no-use-server-timestamps -O $@ $(GECKO64_TARBALL_URL)
 
 $(SRC)/contrib/$(GECKO32_TARBALL):
 	mkdir -p $(dir $@)
-	wget -O $@ $(GECKO32_TARBALL_URL)
+	wget --no-use-server-timestamps -O $@ $(GECKO32_TARBALL_URL)
 
 $(DIST_GECKO32): $(SRC)/contrib/$(GECKO32_TARBALL)
 	mkdir -p $(DIST_GECKO_DIR)
@@ -958,7 +958,7 @@ all-dist: $(DIST_GECKO32) $(DIST_GECKO64)
 ## wine-mono
 ##
 
-WINEMONO_VER := 8.1.0
+WINEMONO_VER := 9.0.0
 WINEMONO_TARBALL := wine-mono-$(WINEMONO_VER)-x86.tar.xz
 DIST_WINEMONO_DIR := $(DST_DIR)/share/wine/mono
 DIST_WINEMONO := $(OBJ)/.wine-mono-dist
@@ -966,7 +966,7 @@ MONO_TARBALL_URL := https://github.com/madewokherd/wine-mono/releases/download/w
 
 $(SRC)/contrib/$(WINEMONO_TARBALL):
 	mkdir -p $(dir $@)
-	wget -O $@ $(MONO_TARBALL_URL)
+	wget --no-use-server-timestamps -O $@ $(MONO_TARBALL_URL)
 
 $(DIST_WINEMONO): $(SRC)/contrib/$(WINEMONO_TARBALL)
 	mkdir -p $(DIST_WINEMONO_DIR)
@@ -1069,8 +1069,12 @@ $(PROTON37_TRACKED_FILES_TARGET): $(addprefix $(SRCDIR)/,proton_3.7_tracked_file
 USER_SETTINGS_PY_TARGET := $(addprefix $(DST_BASE)/,user_settings.sample.py)
 $(USER_SETTINGS_PY_TARGET): $(addprefix $(SRCDIR)/,user_settings.sample.py)
 
+PROTONFIXES_TARGET := $(addprefix $(DST_BASE)/,protonfixes)
+$(PROTONFIXES_TARGET): $(addprefix $(SRCDIR)/,protonfixes)
+
 DIST_COPY_TARGETS := $(FILELOCK_TARGET) $(PROTON_PY_TARGET) \
-                     $(PROTON37_TRACKED_FILES_TARGET) $(USER_SETTINGS_PY_TARGET)
+                     $(PROTON37_TRACKED_FILES_TARGET) $(USER_SETTINGS_PY_TARGET) \
+                     $(PROTONFIXES_TARGET)
 
 $(DIST_COPY_TARGETS): | $(DST_DIR)
 	cp -a $(SRCDIR)/$(notdir $@) $@
@@ -1103,7 +1107,13 @@ deploy: all
 redist: all
 	mkdir -p $(REDIST_DIR)
 	rsync --delete -arx $(DST_BASE)/ $(REDIST_DIR)
-
+	cp $(PROTONFIXES_TARGET)/cabextract $(REDIST_DIR)/files/bin/
+	cp $(PROTONFIXES_TARGET)/libmspack.so.0 $(REDIST_DIR)/files/lib64/
+	cp $(PROTONFIXES_TARGET)/libmspack.so.0.1.0 $(REDIST_DIR)/files/lib64/
+	mv $(REDIST_DIR) $(BUILD_NAME)
+	tar -cvzf $(BUILD_NAME).tar.gz $(BUILD_NAME)
+	sha512sum $(BUILD_NAME).tar.gz > $(BUILD_NAME).sha512sum
+	@echo "Proton build available at $(BUILD_NAME).tar.gz"
 
 ##
 ## make module=$dllname module[32,64]
