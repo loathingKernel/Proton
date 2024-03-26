@@ -1536,6 +1536,16 @@ class Session:
         else:
             argv = [g_proton.wine64_bin, "c:\\windows\\system32\\steam.exe"]
 
+        if 'winetricks' in self.cmdlineappend:
+            after_winetricks = self.cmdlineappend.split('winetricks', 1)[1]
+            arguments = after_winetricks.split()
+            if len(arguments) == 0:
+                protonfixes.util.protontricks(gui)
+            else:
+                for arg in arguments:
+                    protonfixes.util.protontricks(arg)
+            sys.exit(0)
+
         rc = self.run_proc(adverb + argv + sys.argv[2:] + self.cmdlineappend)
 
         if remote_debug_proc:
