@@ -36,14 +36,113 @@ from ctypes import c_ssize_t
 
 from filelock import FileLock
 from random import randrange
+from pathlib import Path
 
 #To enable debug logging, copy "user_settings.sample.py" to "user_settings.py"
 #and edit it if needed.
 
-CURRENT_PREFIX_VERSION="ULWGL-Proton-9.0-200-1"
+CURRENT_PREFIX_VERSION="UMU-Proton-9.0-200-2"
 
 PFX="Proton: "
 ld_path_var = "LD_LIBRARY_PATH"
+
+def empty_directory(path):
+    # Walk through the directory structure top-down (False)
+    for root, dirs, files in os.walk(path, topdown=False):
+        # Remove files and symlinks to files
+        for name in files:
+            item_path = os.path.join(root, name)
+            if os.path.islink(item_path):
+                os.remove(item_path) # Remove symlink
+            else:
+                os.remove(item_path) # Remove file
+        # Remove directories and symlinks to directories
+        for name in dirs:
+            item_path = os.path.join(root, name)
+            if os.path.islink(item_path):
+                os.remove(item_path) # Remove symlink
+            else:
+                os.rmdir(item_path) # Remove directory
+
+# If -steamdeck mode is enabled, try to copy existing game prefixes to steamdeck's prefix location -- this helps to preserve mods and saves across systems
+# Note: this completely wipes the existing destination prefix and copies the source prefix over instead.
+
+# source = game partition, destination = steamdeck prefix location
+# From game partition to steamdeck (steamdeck enabled)
+if os.getenv("SteamDeck") == "1" and os.getenv("COPYPREFIX") == "1":
+    # Get the value of the STEAM_COMPAT_INSTALL_PATH environment variable
+    steam_compat_install_path = os.getenv('STEAM_COMPAT_INSTALL_PATH')
+
+    # Navigate up two directories
+    parent_directory = Path(steam_compat_install_path).parents[1]
+
+    # Check if the "compatdata/<steam game>" folder exists and is not empty
+    compatdata_path = parent_directory / "compatdata" / str(os.environ.get("SteamAppId", 0))
+    if compatdata_path.exists() and os.listdir(compatdata_path):
+        # Define the destination directory
+        steamdeck_compatdata = Path(os.environ["STEAM_BASE_FOLDER"]) / "steamapps" / "compatdata" / str(os.environ.get("SteamAppId", 0))
+
+        # Remove destination if it already exists:
+        if os.path.isdir(steamdeck_compatdata) and os.listdir(steamdeck_compatdata):
+            empty_directory(steamdeck_compatdata)
+
+        # Copy the "compatdata/<steam game>" folder to the destination directory
+        # Use dirs_exist_ok=True to avoid FileExistsError if the destination directory already exists
+        shutil.copytree(compatdata_path, steamdeck_compatdata, dirs_exist_ok=True, symlinks=True)
+
+    # Check if the "shadercache/<steam game>" folder exists and is not empty
+    shadercache_path = parent_directory / "shadercache" / str(os.environ.get("SteamAppId", 0))
+
+    if shadercache_path.exists() and os.listdir(shadercache_path):
+        # Define the destination directory
+        steamdeck_shadercache = Path(os.environ["STEAM_BASE_FOLDER"]) / "steamapps" / "shadercache" / str(os.environ.get("SteamAppId", 0))
+
+        # Remove destination if it already exists:
+        if os.path.isdir(steamdeck_shadercache) and os.listdir(steamdeck_shadercache):
+            empty_directory(steamdeck_shadercache)
+
+        # Copy the "shadercache/<steam game>" folder to the destination directory
+        # Use dirs_exist_ok=True to avoid FileExistsError if the destination directory already exists
+        shutil.copytree(shadercache_path, steamdeck_shadercache, dirs_exist_ok=True, symlinks=True)
+
+# source = steamdeck prefix location, destination = game partition
+# From steamdeck to game partition (steamdeck disabled)
+if os.getenv("SteamDeck") == "0" or "SteamDeck" not in os.environ:
+    if os.getenv("COPYPREFIX") == "1":
+        # Get the value of the STEAM_COMPAT_INSTALL_PATH environment variable
+        steam_compat_install_path = os.getenv('STEAM_COMPAT_INSTALL_PATH')
+
+        # Navigate up two directories
+        parent_directory = Path(steam_compat_install_path).parents[1]
+
+        # Check if the "compatdata/<steam game>" folder exists and is not empty
+        steamdeck_compatdata = Path(os.environ["STEAM_BASE_FOLDER"]) / "steamapps" / "compatdata" / str(os.environ.get("SteamAppId", 0))
+        if os.path.isdir(steamdeck_compatdata) and os.listdir(steamdeck_compatdata):
+            # Define the destination directory
+            compatdata_path = parent_directory / "compatdata" / str(os.environ.get("SteamAppId", 0))
+
+            # Remove destination if it already exists:
+            if os.path.isdir(compatdata_path) and os.listdir(compatdata_path):
+                empty_directory(compatdata_path)
+
+            # Copy the steamdeck_compatdata to the compatdata_path
+            # Use dirs_exist_ok=True to avoid FileExistsError if the destination directory already exists
+            shutil.copytree(steamdeck_compatdata, compatdata_path, dirs_exist_ok=True, symlinks=True)
+
+        # Similar logic for shadercache
+        steamdeck_shadercache = Path(os.environ["STEAM_BASE_FOLDER"]) / "steamapps" / "shadercache" / str(os.environ.get("SteamAppId", 0))
+
+        if os.path.isdir(steamdeck_shadercache) and os.listdir(steamdeck_shadercache):
+            # Define the destination directory
+            shadercache_path = parent_directory / "shadercache" / str(os.environ.get("SteamAppId", 0))
+
+            # Remove destination if it already exists:
+            if os.path.isdir(shadercache_path) and os.listdir(shadercache_path):
+                empty_directory(shadercache_path)
+
+            # Copy the steamdeck_shadercache to the shadercache_path
+            # Use dirs_exist_ok=True to avoid FileExistsError if the destination directory already exists
+            shutil.copytree(steamdeck_shadercache, shadercache_path, dirs_exist_ok=True, symlinks=True)
 
 def file_exists(s, *, follow_symlinks):
     if follow_symlinks:
