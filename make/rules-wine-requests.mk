@@ -23,8 +23,8 @@ $$(OBJ)/.$(1)-wine-requests: | $$(OBJ)/.$(1)-post-source
 	cd "$$($(2)_SRC)" && tools/make_requests
 	touch $$@
 
-$$(OBJ)/.$(1)-build32: $$(OBJ)/.$(1)-wine-requests
-$$(OBJ)/.$(1)-build64: $$(OBJ)/.$(1)-wine-requests
+$$(OBJ)/.$(1)-configure32: $$(OBJ)/.$(1)-wine-requests
+$$(OBJ)/.$(1)-configure64: $$(OBJ)/.$(1)-wine-requests
 endef
 
 rules-wine-requests = $(call create-rules-wine-requests,$(1),$(call toupper,$(1)))
