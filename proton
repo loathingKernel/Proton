@@ -1635,15 +1635,6 @@ class Session:
         else:
             argv = [g_proton.wine64_bin, "c:\\windows\\system32\\steam.exe"]
 
-        if 'winetricks' in self.cmdlineappend:
-            after_winetricks = self.cmdlineappend.split('winetricks', 1)[1]
-            arguments = after_winetricks.split()
-            if len(arguments) == 0:
-                protonfixes.util.protontricks(gui)
-            else:
-                protonfixes.util.protontricks(arguments)
-            sys.exit(0)
-
         rc = self.run_proc(adverb + argv + sys.argv[2:] + self.cmdlineappend)
 
         if remote_debug_proc:
@@ -1680,6 +1671,24 @@ if __name__ == "__main__":
         g_proton.make_default_prefix()
 
     g_session.init_session(sys.argv[1] != "runinprefix")
+
+    # Allow umu clients to run winetricks verbs and be the frontend for them
+    if (
+        g_session.env.get("UMU_ID")
+        and g_session.env.get("EXE", "").endswith("winetricks")
+        and g_session.env.get("PROTON_VERB") == "waitforexitandrun"
+    ):
+        wt_verbs = " ".join(sys.argv[2:][2:])
+        g_session.env["WINE"] = g_proton.wine_bin
+        g_session.env["WINELOADER"] = g_proton.wine_bin
+        g_session.env["WINESERVER"] = g_proton.wineserver_bin
+        g_session.env["WINETRICKS_LATEST_VERSION_CHECK"] = "disabled"
+        g_session.env["LD_PRELOAD"] = ""
+
+        log(f"Running winetricks verbs in prefix: {wt_verbs}")
+        rc = subprocess.run(sys.argv[2:], check=False, env=g_session.env).returncode
+
+        sys.exit(rc)
 
     import protonfixes
 
