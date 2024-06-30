@@ -59,9 +59,6 @@
 
 ### END WINE PENDING UPSTREAM SECTION ###
 
-    echo "WINE: -PENDING- Add options to disable proton media converter."
-    patch -Np1 < ../patches/wine-hotfixes/pending/add-envvar-to-gate-media-converter.patch
-
     popd
 
 ### END WINE PATCHING ###
