@@ -41,7 +41,7 @@ from pathlib import Path
 #To enable debug logging, copy "user_settings.sample.py" to "user_settings.py"
 #and edit it if needed.
 
-CURRENT_PREFIX_VERSION="UMU-Proton-9.0-200-2"
+CURRENT_PREFIX_VERSION="UMU-Proton-9.0-2"
 
 PFX="Proton: "
 ld_path_var = "LD_LIBRARY_PATH"
@@ -514,6 +514,7 @@ class Proton:
         self.lib_dir = self.path("files/lib/")
         self.lib64_dir = self.path("files/lib64/")
         self.fonts_dir = self.path("files/share/fonts/")
+        self.media_dir = self.path("files/share/media/")
         self.wine_fonts_dir = self.path("files/share/wine/fonts/")
         self.wine_inf = self.path("files/share/wine/wine.inf")
         self.version_file = self.path("version")
@@ -1119,9 +1120,6 @@ def default_compat_config():
                 "1359980", #POSTAL: Brain Damaged
                 "1766430", #POSTAL Brain Damaged Demo
                 "692890", #Roboquest
-                "794260", #Outward: Definitive Edition
-                "1328350", #Turbo Overkill
-                "2001540", #Slayers X Demo
 
                 #affected by CW bug 19741
                 "1017900", #Age of Empires: Definitive Edition
@@ -1208,12 +1206,14 @@ def default_compat_config():
                 "499100", #Dark Parables: The Exiled Prince Collector's Edition (499100)
                 "1404090", #Trivia Tricks
                 "2052410", #WITCH ON THE HOLY NIGHT
+                "789910", #Planet of the Apes: Last Frontier
                 ]:
             ret.add("heapdelayfree")
 
         if appid in [
                 "21980", #Call of Juarez: Bound in Blood
                 "553850", #Helldivers 2
+                "2055290", #Sonic Colors: Ultimate
                 ]:
             ret.add("heapzeromemory")
 
@@ -1225,13 +1225,6 @@ def default_compat_config():
             ret.add("noesync")
 
         if appid in [
-                "1237970", #Titanfall 2
-                ]:
-            for idx, arg in enumerate(sys.argv):
-                if '-northstar' in arg:
-                    ret.add("northstar")
-
-        if appid in [
                 # disable dxvknvapi for titles which dislike it
                 "1088850", #Marvel's Guardians of the Galaxy
                 "1418100", #Swords of Legends Online
@@ -1239,15 +1232,12 @@ def default_compat_config():
                 "1939100", #Go Home Annie
                 "108710", #Alan Wake
                 "435150", #Divinity: Original Sin 2 - Definitive Edition
-                "2420110", #Horizon Forbidden West
                 "505170", #Carmageddon: Max Damage
+                "109600", #Neverwinter
+                "9900", #Star Trek Online
+                "9880", #Champions Online
                 ]:
             ret.add("disablenvapi")
-
-        if appid in [
-                "2395210" #Tony Hawk's Pro Skater 1 + 2
-                ]:
-            ret.add("forcenvapi")
 
         if appid in [
                 "2395210" #Tony Hawk's Pro Skater 1 + 2
@@ -1259,7 +1249,35 @@ def default_compat_config():
                 ]:
             ret.add("hideapu")
 
+        if appid in [
+                "7000", # Tomb Raider: Legend
+                "8000", # Tomb Raider: Anniversary
+                "22300", # Fallout 3
+                "22370", # Fallout 3: Game of the Year Edition
+                "72850", # The Elder Scrolls V: Skyrim
+                "377160", # Fallout 4
+                "397950", # Clustertruck
+                "489830", # The Elder Scrolls V: Skyrim Special Edition
+                "712180", # Mugsters
+                ]:
+            ret.add("xalia")
+
     return ret
+
+default_cpu_limit = {
+    "19900"     :  16,  # Far Cry 2
+    "298110"    :  16,  # Far Cry 4
+    "20920"     :  16,  # The Witcher 2: Assassins of Kings Enchanced Edition
+    "35130"     :  16,  # Lara Croft and the Guardian of Light
+    "55150"     :  16,  # Warhammer 40,000: Space Marine
+    "204450"    :  16,  # Call of Juarez: Gunslinger
+    "15620"     :  8,   # Warhammer 40,000: Dawn of War II
+    "20570"     :  8,   # Warhammer 40,000: Dawn of War II - Chaos Rising
+    "56400"     :  8,   # Warhammer 40,000: Dawn of War II - Retribution
+    "618970"    :  4,   # Outcast - Second Contact
+    "10150"     :  8,   # Prototype
+    "2229830"   :  1,   # Command & Conquer and The Covert Operations
+}
 
 class Session:
     def __init__(self):
@@ -1298,6 +1316,12 @@ class Session:
         if not "noforcelgadd" in self.compat_config:
             self.compat_config.add("forcelgadd")
 
+        appid = os.environ.get("SteamGameId", 0)
+        if "PROTON_CPU_TOPOLOGY" in self.env:
+            self.env["WINE_CPU_TOPOLOGY"] = self.env["PROTON_CPU_TOPOLOGY"]
+        elif appid in default_cpu_limit:
+            self.env["WINE_CPU_TOPOLOGY"] = str(default_cpu_limit[appid])
+
     def init_wine(self):
         if "HOST_LC_ALL" in self.env and len(self.env["HOST_LC_ALL"]) > 0:
             #steam sets LC_ALL=C to help some games, but Wine requires the real value
@@ -1335,6 +1359,9 @@ class Session:
         if "STEAM_COMPAT_TRANSCODED_MEDIA_PATH" in os.environ:
             self.env["MEDIACONV_AUDIO_TRANSCODED_FILE"] = os.environ["STEAM_COMPAT_TRANSCODED_MEDIA_PATH"] + "/transcoded_audio.foz"
             self.env["MEDIACONV_VIDEO_TRANSCODED_FILE"] = os.environ["STEAM_COMPAT_TRANSCODED_MEDIA_PATH"] + "/transcoded_video.foz"
+
+        self.env["MEDIACONV_BLANK_VIDEO_FILE"] = g_proton.media_dir + "blank.mkv"
+        self.env["MEDIACONV_BLANK_AUDIO_FILE"] = g_proton.media_dir + "blank.ptna"
 
         prepend_to_env_str(self.env, "PATH", g_proton.bin_dir, ":")
 
@@ -1400,6 +1427,7 @@ class Session:
         if "PROTON_LOG" in self.env and nonzero(self.env["PROTON_LOG"]):
             self.env.setdefault("WINEDEBUG", "+timestamp,+pid,+tid,+seh,+unwind,+threadname,+debugstr,+loaddll,+mscoree")
             self.env.setdefault("DXVK_LOG_LEVEL", "info")
+            self.env.setdefault("DXVK_NVAPI_LOG_LEVEL", "info")
             self.env.setdefault("VKD3D_DEBUG", "warn")
             self.env.setdefault("VKD3D_SHADER_DEBUG", "fixme")
             self.env.setdefault("WINE_MONO_TRACE", "E:System.NotImplementedException")
@@ -1420,17 +1448,13 @@ class Session:
             self.compat_config.add("wined3d")
 
         if not self.check_environment("PROTON_USE_WINED3D", "wined3d"):
-            if not self.check_environment("PROTON_USE_WINED3D11", "wined3d"):
-                self.check_environment("PROTON_USE_WINED3D9",  "wined3d9")
-        self.check_environment("PROTON_NO_D3D12", "nod3d12")
+            self.check_environment("PROTON_USE_WINED3D11", "wined3d")
         self.check_environment("PROTON_NO_D3D11", "nod3d11")
         self.check_environment("PROTON_NO_D3D10", "nod3d10")
-        self.check_environment("PROTON_NO_D9VK",  "nod3d9")
         self.check_environment("PROTON_NO_ESYNC", "noesync")
         self.check_environment("PROTON_NO_FSYNC", "nofsync")
         self.check_environment("PROTON_FORCE_LARGE_ADDRESS_AWARE", "forcelgadd")
         self.check_environment("PROTON_OLD_GL_STRING", "oldglstr")
-        self.check_environment("PROTON_NO_WRITE_WATCH", "nowritewatch")
         self.check_environment("PROTON_HIDE_NVIDIA_GPU", "hidenvgpu")
         self.check_environment("PROTON_HIDE_VANGOGH_GPU", "hidevggpu")
         self.check_environment("PROTON_SET_GAME_DRIVE", "gamedrive")
@@ -1455,9 +1479,6 @@ class Session:
         else:
             self.env["WINEFSYNC"] = "1"
 
-        if "nowritewatch" in self.compat_config:
-            self.env["WINE_DISABLE_WRITE_WATCH"] = "1"
-
         if "oldglstr" in self.compat_config:
             #mesa override
             self.env["MESA_EXTENSION_MAX_YEAR"] = "2003"
@@ -1478,9 +1499,6 @@ class Session:
 
         if "vkd3dbindlesstb" in self.compat_config:
             append_to_env_str(self.env, "VKD3D_CONFIG", "force_bindless_texel_buffer", ",")
-
-        if "northstar" in self.compat_config:
-            append_to_env_str(self.env, "WINEDLLOVERRIDES", "wsock32=n,b", ";")
 
         if "vkd3dfl12" in self.compat_config:
             if not "VKD3D_FEATURE_LEVEL" in self.env:
@@ -1506,6 +1524,9 @@ class Session:
 
         if "noopwr" in self.compat_config:
             self.env["WINE_DISABLE_VULKAN_OPWR"] = "1"
+
+        if "xalia" in self.compat_config and "PROTON_USE_XALIA" not in self.env:
+            self.env["PROTON_USE_XALIA"] = "1"
 
         if "PROTON_CRASH_REPORT_DIR" in self.env:
             self.env["WINE_CRASH_REPORT_DIR"] = self.env["PROTON_CRASH_REPORT_DIR"]
@@ -1555,11 +1576,6 @@ class Session:
         if update_prefix_files:
             g_compatdata.setup_prefix()
 
-        if "nod3d12" in self.compat_config:
-            self.dlloverrides["d3d12"] = ""
-            if "dxgi" in self.dlloverrides:
-                del self.dlloverrides["dxgi"]
-
         if "nod3d11" in self.compat_config:
             self.dlloverrides["d3d11"] = ""
             if "dxgi" in self.dlloverrides:
@@ -1572,13 +1588,6 @@ class Session:
 
         if "nativevulkanloader" in self.compat_config:
             self.dlloverrides["vulkan-1"] = "n"
-
-        if "nod3d9" in self.compat_config:
-            self.dlloverrides["d3d9"] = ""
-            self.dlloverrides["dxgi"] = ""
-
-        if "wined3d9" in self.compat_config:
-            self.dlloverrides["d3d9"] = "b"
 
         if "disablenvapi" not in self.compat_config or "forcenvapi" in self.compat_config:
             self.env["DXVK_ENABLE_NVAPI"] = "1"
