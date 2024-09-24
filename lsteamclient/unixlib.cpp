@@ -561,7 +561,7 @@ char *steamclient_dos_to_unix_path( const char *src, int is_url )
         uint32_t r;
 
         if (is_url) while (*src == '/') ++src;
-        r = ntdll_umbstowcs( src, -1, srcW + 4, PATH_MAX - 4 );
+        r = ntdll_umbstowcs( src, strlen( src ) + 1, srcW + 4, PATH_MAX - 4 );
         if (r == 0) unix_path = NULL;
         else
         {
@@ -628,7 +628,7 @@ const char **steamclient_dos_to_unix_path_array( const char **src )
         TRACE( "  src[%zu] %s\n", s - src, debugstr_a(*s) );
         if (IS_ABSOLUTE( *s ))
         {
-            ntdll_umbstowcs( *s, -1, scratch + 4, PATH_MAX - 4 );
+            ntdll_umbstowcs( *s, strlen( *s ) + 1, scratch + 4, PATH_MAX - 4 );
             collapse_path( scratch, 4 );
             *o = get_unix_file_name( scratch );
         }
@@ -805,8 +805,7 @@ void convert_callback_utow(int id, void *u_callback, int u_callback_len, void *w
     if (!best)
     {
         ERR( "Could not find id %d, u_callback_len %d, w_callback_len %d.\n", id, u_callback_len, w_callback_len );
-        memcpy( w_callback, u_callback, std::min(w_callback_len, u_callback_len) );
-        return;
+        best = find_first_callback_def_by_id( id );
     }
 
     if (best->w_callback_len != w_callback_len || best->u_callback_len != u_callback_len)
@@ -835,7 +834,10 @@ void callback_message_utow( const u_CallbackMsg_t *u_msg, w_CallbackMsg_t *w_msg
             ++c;
         }
         if (c == end || c->id != u_msg->m_iCallback)
-            WARN( "Unix len %d not found for callback %d.\n", u_msg->m_cubParam, u_msg->m_iCallback );
+        {
+            ERR( "Unix len %d not found for callback %d.\n", u_msg->m_cubParam, u_msg->m_iCallback );
+            len = find_first_callback_def_by_id( u_msg->m_iCallback )->w_callback_len;
+        }
     }
 
     w_msg->m_hSteamUser = u_msg->m_hSteamUser;
