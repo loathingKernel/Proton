@@ -27,6 +27,9 @@
     echo "WINE: -GAME FIXES- add file search workaround hack for Phantasy Star Online 2 (WINE_NO_OPEN_FILE_SEARCH)"
     patch -Np1 < ../patches/game-patches/pso2_hack.patch
 
+    echo "WINE: -GAME FIXES- add xinput support to Dragon Age Inquisition"
+    patch -Np1 < ../patches/game-patches/dai_xinput.patch
+
 ### END GAME PATCH SECTION ###
 
 ### (2-4) WINE HOTFIX/BACKPORT SECTION ###
