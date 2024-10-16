@@ -432,7 +432,6 @@ $(eval $(call rules-wine-requests,wine))
 $(OBJ)/.wine-post-source:
 	cd $(WINE_SRC) && dlls/winevulkan/make_vulkan -x vk.xml
 	-cd $(WINE_SRC) && tools/make_specfiles
-	-cd $(WINE_SRC) && tools/make_requests
 	touch $@
 
 $(OBJ)/.wine-post-build64:
