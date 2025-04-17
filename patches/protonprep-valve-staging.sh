@@ -2,10 +2,25 @@
 
 ### (1) PREP SECTION ###
 
+    pushd dxvk
+    git reset --hard HEAD
+    git clean -xdf
+    popd
+
+    pushd vkd3d-proton
+    git reset --hard HEAD
+    git clean -xdf
+
+    popd
+
+    pushd dxvk-nvapi
+    git reset --hard HEAD
+    git clean -xdf
+    popd
+
     pushd gstreamer
     git reset --hard HEAD
     git clean -xdf
-    
     echo "GSTREAMER: fix for unclosable invisible wayland opengl windows in taskbar"
     patch -Np1 < ../patches/gstreamer/5509.patch
     patch -Np1 < ../patches/gstreamer/5511.patch
@@ -34,16 +49,12 @@
     git reset --hard HEAD
     git clean -xdf
 
+# This doesn't correctly resolve the issue. We have patches that handle this for gstreamer
+# Need to revert this so our patches work.
+
+    git revert --no-commit 37818f7a547f7090ef684f8202438374fc31a165
+
 ### (2-3) GAME PATCH SECTION ###
-
-    echo "WINE: -GAME FIXES- assetto corsa hud fix"
-    patch -Np1 < ../patches/game-patches/assettocorsa-hud.patch
-
-    echo "WINE: -GAME FIXES- add file search workaround hack for Phantasy Star Online 2 (WINE_NO_OPEN_FILE_SEARCH)"
-    patch -Np1 < ../patches/game-patches/pso2_hack.patch
-
-    echo "WINE: -GAME FIXES- add xinput support to Dragon Age Inquisition"
-    patch -Np1 < ../patches/game-patches/dai_xinput.patch
 
 ### END GAME PATCH SECTION ###
 
@@ -62,18 +73,25 @@
     echo "WINE: -PENDING- Add WINE_DISABLE_SFN option. (Yakuza 5 cutscenes fix)"
     patch -Np1 < ../patches/wine-hotfixes/pending/ntdll_add_wine_disable_sfn.patch
 
-    echo "WINE: -PENDING- Add TCP_KEEP patch (Star Citizen Launcher 2.0 fix)"
-    patch -Np1 < ../patches/wine-hotfixes/pending/TCP_KEEP-fixup.patch
-
-    echo "WINE: -PENDING- shell32: Implement some file_operation apis. (Solo Leveling netmarble launcher)"
-    # https://gitlab.winehq.org/wine/wine/-/merge_requests/5671
-    patch -Np1 < ../patches/wine-hotfixes/pending/5671.patch
-
     echo "WINE: -PENDING- ncrypt: NCryptDecrypt implementation (PSN Login for Ghost of Tsushima)"
     patch -Np1 < ../patches/wine-hotfixes/pending/NCryptDecrypt_implementation.patch
 
     echo "WINE: -PENDING- DXGI_FORMAT_R8G8B8A8_UNORM: Suport for DXGI_FORMAT_R8G8B8A8_UNORM on d2d_wic_render_target_init (Alt:V GTA V coustom client)"
     patch -Np1 < ../patches/wine-hotfixes/pending/support_for_DXGI_FORMAT_R8G8B8A8_UNORM.patch
+
+    # https://gitlab.winehq.org/wine/wine/-/merge_requests/7032
+    # https://bugs.winehq.org/show_bug.cgi?id=56259
+    # https://forum.winehq.org/viewtopic.php?t=38443
+    echo "WINE: --PENDING-- add webview2 patches for GIRLS' FRONTLINE 2: EXILIUM and Vermintide 2"
+    patch -Np1 < ../patches/wine-hotfixes/pending/webview2.patch
+    patch -Np1 < ../patches/wine-hotfixes/pending/webview2-install-fix.patch
+
+    echo "WINE: -PENDING- taskschd (NCSoft Purple Client)"
+    patch -Np1 < ../patches/wine-hotfixes/pending/0001-taskschd-ncsoft-purple-5153.patch
+    patch -Np1 < ../patches/wine-hotfixes/pending/0002-taskschd-ncsoft-purple-5143.patch
+    patch -Np1 < ../patches/wine-hotfixes/pending/0003-taskschd-ncsoft-purple-5142.patch
+    patch -Np1 < ../patches/wine-hotfixes/pending/0004-taskschd-ncsoft-purple-5175.patch
+    patch -Np1 < ../patches/wine-hotfixes/pending/0005-taskschd-ncsoft-purple-5103.patch
 
 ### END WINE PENDING UPSTREAM SECTION ###
 
