@@ -30,7 +30,21 @@ Attaching to process 2263566
 0x000075dce0cd788d in ?? ()
 ```
 
-You can use `source` [wine's
+With Proton Experimental (and >= 9.0-2), GDB should be able to load the symbols right
+away. However, for the most seamless experience you will want to use a
+custom version of GDB with a couple of patches to better integrate with
+Wine.
+
+You can find this fork at https://gitlab.winehq.org/rbernon/binutils-gdb,
+which you can build with `configure && make all-gdb && make install-gdb`.
+Make sure to have python development packages installed, as GDB python
+support will be required.
+
+With this custom GDB you can `source` [Wine's custom unwinder](https://github.com/ValveSoftware/wine/blob/experimental_9.0/tools/gdbunwind.py)
+in your `~/.gdbinit`, and you will get backtraces across PE / unix boundaries.
+
+
+With older Proton you can use `source` [wine's
 gdbinit](https://github.com/ValveSoftware/wine/blob/proton_8.0/tools/gdbinit.py)
 to make `load-symbol-files` command available that uses `/proc/$pid/maps` to
 load the symbols:
@@ -118,4 +132,55 @@ Wine-dbg> info process
  00000128 62       \_ 'Game.exe'
  000000d0 3        \_ 'explorer.exe'
  0000010c 3           \_ 'tabtip.exe'
+```
+
+**NOTE:** If you need a predictable bus name instead of the unique connection
+name (the `:1.307` from example above) you can use `com.steampowered.App1234567`
+where 1234567 is the Steam App ID for the title you are debugging.
+
+You can always use a tool like `qdbus` to list available bus names.
+
+
+Starting A Different Binary
+---------------------------
+
+If you want to start a different binary than the game's default you can use a
+few methods. All of the examples below will use `winecfg`.
+
+### Substitution
+
+You can use the following launch option:
+
+```
+echo "%command%" | sed 's/proton waitforexitandrun .*/proton waitforexitandrun winecfg/' | sh
+```
+
+The full substitution of `proton waitforexitandrun .*` is necessary as the
+original `%command%` is very long and may contain multiple mentions of `proton`
+or the original binary.
+
+### Pressure-Vessel Shell
+
+[Pressure-vessel][pv] allows to spawn an xterm instead of launching Proton. This
+can be accomplished by setting `PRESSURE_VESSEL_SHELL=instead`. The easiest way
+is to set the launch option to:
+
+[pv]: (https://gitlab.steamos.cloud/steamrt/steam-runtime-tools/-/tree/main/pressure-vessel)
+
+`PRESSURE_VESSEL_SHELL=instead %command%`
+
+The original coommand is then contained in `$@`, e.g.:
+
+```
+/home/ivyl/.local/share/Steam/steamapps/common/SteamLinuxRuntime_sniper/pressure-vessel/bin/steam-runtime-launcher-interface-0 container-runtime /home/ivyl/.local/share/Steam/steamapps/common/Proton - Experimental/proton waitforexitandrun /home/ivyl/.local/share/Steam/steamapps/common/Game/Game.exe
+```
+
+From this point you can invoke `proton` script as all the required environment
+variables are set. If you are copying the path from `$@` make sure to escape or
+quote parts that contain spaces.
+
+To start `winecfg` something like this can be entered:
+
+```
+"/home/ivyl/.local/share/Steam/steamapps/common/Proton - Experimental/proton" waitforexitandrun winecfg
 ```

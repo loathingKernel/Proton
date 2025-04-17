@@ -11,6 +11,8 @@ import os
 import re
 
 SDK_VERSIONS = [
+    "162",
+    "161",
     "160",
     "159",
     "158",
@@ -235,7 +237,7 @@ MANUAL_METHODS = {
 
     "ISteamMatchmakingServers_PingServer": lambda ver, abi: abi == 'u',
     "ISteamMatchmakingServers_PlayerDetails": lambda ver, abi: abi == 'u',
-    "ISteamMatchmakingServers_ReleaseRequest": lambda ver, abi: abi == 'w',
+    "ISteamMatchmakingServers_ReleaseRequest": lambda ver, abi: abi == 'w' or abi == 'u',
     "ISteamMatchmakingServers_RequestFavoritesServerList": lambda ver, abi: abi == 'u',
     "ISteamMatchmakingServers_RequestFriendsServerList": lambda ver, abi: abi == 'u',
     "ISteamMatchmakingServers_RequestHistoryServerList": lambda ver, abi: abi == 'u',
@@ -384,6 +386,9 @@ PATH_CONV_METHODS_WTOU = {
     },
     "ISteamInput_SetInputActionManifestFilePath": {
         "pchInputActionManifestAbsolutePath": {"array": False, "url": False},
+    },
+    "ISteamFriends_ActivateGameOverlayToWebPage": {
+        "pchURL": {"array": False, "url": True},
     },
 }
 
@@ -1172,7 +1177,7 @@ def handle_class(klass):
 
 
 def parse(sources, sdkver, abi):
-    args = [f'-m{abi[1:]}', '-I' + CLANG_PATH + '/include/']
+    args = [f'-m{abi[1:]}', '-I' + CLANG_PATH + '/include/', '-I/usr/include/x86_64-linux-gnu/']
     if abi[0] == 'w':
         args += ["-D_WIN32", "-U__linux__"]
         args += ["-fms-extensions", "-mms-bitfields"]
