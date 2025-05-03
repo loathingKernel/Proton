@@ -86,13 +86,6 @@
     patch -Np1 < ../patches/wine-hotfixes/pending/webview2.patch
     patch -Np1 < ../patches/wine-hotfixes/pending/webview2-install-fix.patch
 
-    echo "WINE: -PENDING- taskschd (NCSoft Purple Client)"
-    patch -Np1 < ../patches/wine-hotfixes/pending/0001-taskschd-ncsoft-purple-5153.patch
-    patch -Np1 < ../patches/wine-hotfixes/pending/0002-taskschd-ncsoft-purple-5143.patch
-    patch -Np1 < ../patches/wine-hotfixes/pending/0003-taskschd-ncsoft-purple-5142.patch
-    patch -Np1 < ../patches/wine-hotfixes/pending/0004-taskschd-ncsoft-purple-5175.patch
-    patch -Np1 < ../patches/wine-hotfixes/pending/0005-taskschd-ncsoft-purple-5103.patch
-
 ### END WINE PENDING UPSTREAM SECTION ###
 
     popd
