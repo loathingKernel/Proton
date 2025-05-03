@@ -25,7 +25,7 @@ SHELL := /bin/bash
 #   BUILD_NAME      - Name of the build for manifests etc.
 #   STEAMRT_IMAGE   - Name of the docker image to use for building
 
-STEAMRT_IMAGE ?= registry.gitlab.steamos.cloud/proton/sniper/sdk:0.20240307.80401-0
+STEAMRT_IMAGE ?= ghcr.io/open-wine-components/umu-sdk:latest
 ifeq ($(SRCDIR),)
 	foo := $(error SRCDIR not set, do not include Makefile.in directly, run ./configure.sh to generate Makefile)
 endif
@@ -1115,7 +1115,7 @@ PROTONFIXES_TARGET := $(addprefix $(DST_BASE)/,protonfixes)
 $(PROTONFIXES_TARGET): $(addprefix $(SRCDIR)/,protonfixes)
 
 $(OBJ)/.build-protonfixes:
-	cd $(SRCDIR)/protonfixes && make
+	cd $(SRCDIR)/protonfixes && ./build.sh
 	touch $(@)
 
 $(PROTONFIXES_TARGET): $(OBJ)/.build-protonfixes
@@ -1176,6 +1176,7 @@ redist: all
 	mkdir -p $(REDIST_DIR)
 	rsync --delete -arx $(DST_BASE)/ $(REDIST_DIR)
 	cp $(PROTONFIXES_TARGET)/cabextract $(REDIST_DIR)/files/bin/
+	cp $(PROTONFIXES_TARGET)/unzip $(REDIST_DIR)/files/bin/
 	cp -a $(PROTONFIXES_TARGET)/libmspack.so $(REDIST_DIR)/files/lib64/
 	cp -a $(PROTONFIXES_TARGET)/libmspack.so.0 $(REDIST_DIR)/files/lib64/
 	cp $(PROTONFIXES_TARGET)/libmspack.so.0.1.0 $(REDIST_DIR)/files/lib64/
