@@ -38,6 +38,10 @@
     git reset --hard HEAD
     git clean -xdf
     popd
+    pushd unzip
+    git reset --hard HEAD
+    git clean -xdf
+    popd
     popd
     popd
 
