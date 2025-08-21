@@ -1112,6 +1112,7 @@ class CompatData:
 
                 use_dxvk_sarek = "dxvksarek" in g_session.compat_config
                 if use_dxvk_sarek:
+                    use_nvapi = False
                     dxvk_path = "dxvk-sarek/"
                 else:
                     dxvk_path = "dxvk/"
