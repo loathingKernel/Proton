@@ -95,10 +95,6 @@ windows_ARCHS = $(subst -windows,,$(filter %-windows,$(ARCHS)))
 i386_SOURCE_DATE_EPOCH := $(BASE_SOURCE_DATE_EPOCH)
 x86_64_SOURCE_DATE_EPOCH := $(shell expr $(BASE_SOURCE_DATE_EPOCH) - 10)
 
-.PHONE: clean
-clean: $(OBJ)
-	rm -rf $(OBJ)/compile_commands $(OBJ)/dist $(OBJ)/wine $(OBJ)/obj-* $(OBJ)/src-* $(OBJ)/dst-* $(OBJ)/.*
-
 # all, all-dist and dist are basically synonyms
 .PHONY: all all-dist dist
 all: all-dist | $(DST_DIR)
@@ -1332,6 +1328,11 @@ $(DIST_FONTS): fonts
 
 all-dist: $(DIST_FONTS)
 
+fonts-distclean::
+	rm -rf $(FONTS_OBJ)
+
+distclean: fonts-distclean
+
 
 ##
 ## Gecko
@@ -1366,6 +1367,11 @@ $(OBJ)/.gecko-x86_64-dist: $(SRC)/contrib/$(GECKO_x86_64_TARBALL)
 
 all-dist: $(OBJ)/.gecko-i386-dist $(OBJ)/.gecko-x86_64-dist
 
+gecko-distclean::
+	rm -rf $(OBJ)/.gecko-{i386,x86_64}-dist
+
+distclean: gecko-distclean
+
 
 ##
 ## wine-mono
@@ -1388,6 +1394,11 @@ $(DIST_WINEMONO): $(SRC)/contrib/$(WINEMONO_TARBALL)
 	touch $@
 
 all-dist: $(DIST_WINEMONO)
+
+mono-distclean::
+	rm -rf $(OBJ)/.wine-mono-dist
+
+distclean: mono-distclean
 
 
 ##
@@ -1415,6 +1426,10 @@ $(DIST_XALIA): $(SRC)/contrib/$(XALIA_ZIP) $(SRC)/xalia-fixups.gudl
 
 all-dist: $(DIST_XALIA)
 
+xalia-distclean::
+	rm -rf $(OBJ)/.xalia-dist
+
+distclean: xalia-distclean
 
 ##
 ## ICU
@@ -1439,6 +1454,11 @@ $(OBJ)/.icu-i386-dist: $(SRC)/icu/$(ICU_i386_TARBALL)
 	touch $@
 
 all-dist: $(OBJ)/.icu-x86_64-dist $(OBJ)/.icu-i386-dist
+
+icu-distclean::
+	rm -rf $(OBJ)/.icu-{x86_64,i386}-dist
+
+distclean: icu-distclean
 
 
 ##
@@ -1569,6 +1589,18 @@ deploy: all
 redist: all
 	mkdir -p $(REDIST_DIR)
 	rsync --delete -arx $(DST_BASE)/ $(REDIST_DIR)
+
+
+##
+## make distclean
+##
+
+dist-distclean::
+	rm -rf $(OBJ)/wine
+	rm -rf $(OBJ)/dist
+	rm -rf $(OBJ)/compile_commands
+
+distclean: dist-distclean
 
 
 ##
