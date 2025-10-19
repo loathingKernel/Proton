@@ -51,7 +51,7 @@ jobs:
         RUSTFLAGS: -Copt-level=3 -Ctarget-cpu=nocona
         USE_LTO: 0
       run: |
-        ../configure.sh --build-name=${{ inputs.name }} --enable-ccache --container-engine=docker
+        ../configure.sh --build-name=${{ inputs.name }} --enable-ccache --container-engine=docker --without-tts
 
     - name: Make ${{ inputs.name }}
       working-directory: ./build
