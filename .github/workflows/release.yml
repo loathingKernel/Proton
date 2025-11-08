@@ -19,12 +19,16 @@ jobs:
         include:
           - name: proton-${{ github.ref_name }}-x86_64
             cflags: -O2 -march=nocona -mtune=core-avx2
+            configure: --without-tts
           - name: proton-${{ github.ref_name }}-x86_64_v2
             cflags: -O2 -march=x86-64-v2 -mtune=core-avx2
+            configure: --without-tts
           - name: proton-${{ github.ref_name }}-x86_64_v3
             cflags: -O2 -march=x86-64-v3 -mtune=core-avx2
+            configure: --without-tts
           - name: proton-${{ github.ref_name }}-x86_64_v4
             cflags: -O2 -march=x86-64-v4 -mtune=skylake-avx512
+            configure: --without-tts
     uses: ./.github/workflows/_job_build.yml
     with:
       name: ${{ matrix.name }}
