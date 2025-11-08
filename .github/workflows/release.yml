@@ -29,6 +29,18 @@ jobs:
           - name: proton-${{ github.ref_name }}-x86_64_v4
             cflags: -O2 -march=x86-64-v4 -mtune=skylake-avx512
             configure: --without-tts
+          - name: proton-${{ github.ref_name }}-x86_64-llvm
+            cflags: -O3 -march=nocona -mtune=core-avx2
+            configure: '--without-tts --proton-sdk-image=sherrydck/proton-sdk-llvm-mingw:latest'
+          - name: proton-${{ github.ref_name }}-x86_64_v2-llvm
+            cflags: -O3 -march=x86-64-v2 -mtune=core-avx2
+            configure: '--without-tts --proton-sdk-image=sherrydck/proton-sdk-llvm-mingw:latest'
+          - name: proton-${{ github.ref_name }}-x86_64_v3-llvm
+            cflags: -O3 -march=x86-64-v3 -mtune=core-avx2
+            configure: '--without-tts --proton-sdk-image=sherrydck/proton-sdk-llvm-mingw:latest'
+          - name: proton-${{ github.ref_name }}-x86_64_v4-llvm
+            cflags: -O3 -march=x86-64-v4 -mtune=skylake-avx512
+            configure: '--without-tts --proton-sdk-image=sherrydck/proton-sdk-llvm-mingw:latest'
     uses: ./.github/workflows/_job_build.yml
     with:
       name: ${{ matrix.name }}
@@ -74,6 +86,10 @@ jobs:
           - name: proton-${{ github.ref_name }}-x86_64_v2
           - name: proton-${{ github.ref_name }}-x86_64_v3
           - name: proton-${{ github.ref_name }}-x86_64_v4
+          - name: proton-${{ github.ref_name }}-x86_64-llvm
+          - name: proton-${{ github.ref_name }}-x86_64_v2-llvm
+          - name: proton-${{ github.ref_name }}-x86_64_v3-llvm
+          - name: proton-${{ github.ref_name }}-x86_64_v4-llvm
     uses: ./.github/workflows/_job_upload.yml
     with:
       version: ${{ github.ref_name }}
