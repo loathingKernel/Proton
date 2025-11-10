@@ -1,6 +1,11 @@
 name: Snapshot
 
-on: workflow_dispatch
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - 'plop_*_*/main'
+      - 'plop_*_*/dev'
 
 concurrency:
   group: ${{ github.ref_name }}
