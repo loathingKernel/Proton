@@ -1639,6 +1639,14 @@ class Session:
             if self.env["PROTON_LOG"] != "1":
                 append_to_env_str(self.env, "WINEDEBUG", self.env["PROTON_LOG"], ",")
 
+        # HACK: handle DXVK_FRAME_RATE and VKD3D_FRAME_RATE through DXVK_CONFIG
+        frame_rate = self.env.pop("DXVK_FRAME_RATE",
+            self.env.pop("VKD3D_FRAME_RATE", self.env.pop("PROTON_FRAME_RATE", None))
+        )
+        if frame_rate:
+            prepend_to_env_str(self.env, "DXVK_CONFIG", "dxgi.maxFrameRate=" + frame_rate, ";")
+            prepend_to_env_str(self.env, "DXVK_CONFIG", "d3d9.maxFrameRate=" + frame_rate, ";")
+
         #for performance, logging is disabled by default; override with user_settings.py
         self.env.setdefault("WINEDEBUG", "-all")
         self.env.setdefault("DXVK_LOG_LEVEL", "none")
