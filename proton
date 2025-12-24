@@ -532,7 +532,6 @@ class Proton:
         self.wine_bin = self.bin_dir + "wine"
         self.wine64_bin = self.bin_dir + "wine64"
         self.wineserver_bin = self.bin_dir + "wineserver"
-        self.dist_lock = FileLock(self.path("dist.lock"), timeout=-1)
         self.host_pe_arch = "x86_64-windows"
         self.wow64_pe_arch = "i386-windows"
 
@@ -1134,10 +1133,17 @@ class CompatData:
                     try_copy(g_proton.default_pfx_dir + "drive_c/windows/syswow64/" + f + ".dll", "drive_c/windows/syswow64",
                             prefix=self.prefix_dir, track_file=tracked_files, link_debug=True)
 
+                use_dxvk_sarek = "dxvksarek" in g_session.compat_config and os.path.isdir(g_proton.lib_dir + "wine/dxvk-sarek")
+                if use_dxvk_sarek:
+                    use_nvapi = False
+                    dxvk_path = "dxvk-sarek/"
+                else:
+                    dxvk_path = "dxvk/"
+
                 for f in dxvkfiles:
-                    try_copy(g_proton.arch_pe_dir("wine/dxvk", False) + f + ".dll", "drive_c/windows/system32",
+                    try_copy(g_proton.arch_pe_dir("wine/" + dxvk_path, False) + f + ".dll", "drive_c/windows/system32",
                             prefix=self.prefix_dir, track_file=tracked_files, link_debug=True)
-                    try_copy(g_proton.arch_pe_dir("wine/dxvk", True) + f + ".dll", "drive_c/windows/syswow64",
+                    try_copy(g_proton.arch_pe_dir("wine/" + dxvk_path, True) + f + ".dll", "drive_c/windows/syswow64",
                             prefix=self.prefix_dir, track_file=tracked_files, link_debug=True)
                     g_session.dlloverrides[f] = "n"
 
@@ -1201,9 +1207,6 @@ class CompatData:
             setup_game_dir_drive()
             setup_steam_dir_drive()
             setup_openvr_paths()
-
-            # add Steam ffmpeg libraries to path
-            prepend_to_env_str(g_session.env, ld_path_var, steamdir + "/ubuntu12_64/video/:" + steamdir + "/ubuntu12_32/video/:" + steamdir + "/linuxarm64/video/", ":")
 
 def comma_escaped(s):
     escaped = False
@@ -1727,6 +1730,7 @@ class Session:
         self.check_environment("PROTON_DXVK_D3D8", "dxvkd3d8")
         self.check_environment("PROTON_NO_D3D11", "nod3d11")
         self.check_environment("PROTON_NO_D3D10", "nod3d10")
+        self.check_environment("PROTON_DXVK_SAREK", "dxvksarek")
         self.check_environment("PROTON_NO_ESYNC", "noesync")
         self.check_environment("PROTON_NO_FSYNC", "nofsync")
         self.check_environment("PROTON_FORCE_LARGE_ADDRESS_AWARE", "forcelgadd")
@@ -2112,8 +2116,6 @@ if __name__ == "__main__":
 
     g_proton = Proton(os.path.dirname(sys.argv[0]))
 
-    g_proton.cleanup_legacy_dist()
-    g_proton.do_steampipe_fixups()
 
     g_compatdata = CompatData(os.environ["STEAM_COMPAT_DATA_PATH"])
 
@@ -2122,7 +2124,8 @@ if __name__ == "__main__":
     g_session.init_wine()
 
     if g_proton.missing_default_prefix():
-        g_proton.make_default_prefix()
+        log("Default prefix is missing, something is very wrong.")
+        sys.exit(1)
 
     g_session.init_session(sys.argv[1] != "runinprefix")
 
