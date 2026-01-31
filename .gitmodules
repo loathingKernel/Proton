@@ -1,9 +1,13 @@
 [submodule "wine"]
 	path = wine
-	url = ../wine
+	url = https://github.com/ValveSoftware/wine.git
 [submodule "dxvk"]
 	path = dxvk
 	url = https://github.com/doitsujin/dxvk.git
+[submodule "dxvk-sarek"]
+	path = dxvk-sarek
+	url = https://github.com/pythonlover02/DXVK-Sarek.git
+	branch = async
 [submodule "openvr"]
 	path = openvr
 	url = https://github.com/ValveSoftware/openvr
@@ -75,3 +79,6 @@
 [submodule "FEX"]
 	path = FEX
 	url = https://github.com/FEX-Emu/FEX/
+[submodule "d7vk"]
+	path = d7vk
+	url = https://github.com/WinterSnowfall/d7vk.git
