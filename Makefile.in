@@ -347,10 +347,12 @@ GST_GOOD_MESON_ARGS += \
 	-Dflx=enabled \
 	-Dxingmux=enabled \
 	-Dy4m=enabled \
-	-Dadaptivedemux2=enabled \
-	-Dflac=enabled \
 	-Djpeg=enabled \
-	-Dspeex=enabled \
+
+GST_GOOD_MESON_ARGS += \
+	-Dadaptivedemux2=disabled \
+	-Dflac=disabled \
+	-Dspeex=disabled
 
 GST_GOOD_DEPENDS = gst_orc gstreamer gst_base libsoup
 GST_GOOD_HOST_DEPENDS = gst_orc
@@ -452,22 +454,24 @@ GST_BAD_MESON_ARGS += \
 	-Dshm=enabled \
 	-Duvch264=enabled \
 	-Dv4l2codecs=enabled \
-	-Daes=enabled \
 	-Dbz2=enabled \
-	-Dclosedcaption=enabled \
-	-Dcolormanagement=enabled \
-	-Ddash=enabled \
-	-Ddtls=enabled \
-	-Dopenal=enabled \
 	-Dopus=enabled \
 	-Dsctp=enabled \
-	-Dsmoothstreaming=enabled \
-	-Dsndfile=enabled \
-	-Dttml=enabled \
+	-Dwebp=enabled \
 	-Dwayland=disabled \
 	-Dx11=disabled \
-	-Dwebp=enabled \
 	-Dorc=enabled
+
+GST_BAD_MESON_ARGS += \
+	-Daes=disabled \
+	-Dclosedcaption=disabled \
+	-Dcolormanagement=disabled \
+	-Ddash=disabled \
+	-Ddtls=disabled \
+	-Dopenal=disabled \
+	-Dsmoothstreaming=disabled \
+	-Dsndfile=disabled \
+	-Dttml=disabled
 
 GST_BAD_DEPENDS = gst_orc gstreamer gst_base
 GST_BAD_HOST_DEPENDS = gst_orc
@@ -598,6 +602,9 @@ FFMPEG_CONFIGURE_ARGS += \
 	--enable-protocol=rtp \
 	--enable-protocol=rtmp \
 	--enable-protocol=rtsp \
+
+FFMPEG_CONFIGURE_ARGS += \
+	--disable-lzma
 
 FFMPEG_i386-unix_CONFIGURE_ARGS := \
 	--cross-prefix=i686-linux-gnu- \
