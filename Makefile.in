@@ -185,6 +185,25 @@ $(eval $(call rules-meson,dav1d,aarch64,unix))
 
 
 ##
+## nghttp2
+##
+
+NGHTTP2_CONFIGURE_ARGS = \
+	--disable-examples \
+	--disable-python-bindings \
+	--enable-lib-only
+
+$(eval $(call rules-source,nghttp2,$(SRCDIR)/nghttp2))
+$(eval $(call rules-configure,nghttp2,i386,unix))
+$(eval $(call rules-configure,nghttp2,x86_64,unix))
+$(eval $(call rules-configure,nghttp2,aarch64,unix))
+
+$(OBJ)/.nghttp2-post-source:
+	cd "$(NGHTTP2_SRC)" && autoreconf -fiv
+	touch $@
+
+
+##
 ## libsoup
 ##
 
@@ -192,6 +211,8 @@ LIBSOUP_MESON_ARGS = \
 	-Ddocs=disabled \
 	-Dautobahn=disabled \
 	-Dtls_check=false
+
+LIBSOUP_DEPENDS = nghttp2
 
 $(eval $(call rules-source,libsoup,$(SRCDIR)/libsoup))
 $(eval $(call rules-meson,libsoup,i386,unix))
