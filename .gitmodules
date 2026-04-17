@@ -4,6 +4,9 @@
 [submodule "dxvk"]
 	path = dxvk
 	url = https://github.com/doitsujin/dxvk.git
+[submodule "dxvk-sarek"]
+	path = dxvk-sarek
+	url = https://github.com/pythonlover02/DXVK-Sarek.git
 [submodule "openvr"]
 	path = openvr
 	url = https://github.com/ValveSoftware/openvr
