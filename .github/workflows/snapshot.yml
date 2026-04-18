@@ -52,6 +52,11 @@ jobs:
             cflags: -O2 -march=x86-64-v3 -mtune=core-avx2
             rustflags: -Copt-level=3 -Ctarget-cpu=nocona
 
+          - name: proton-${{ needs.version.outputs.full_desc }}-x86_64-wow64
+            cflags: -O2 -march=nocona -mtune=core-avx2
+            rustflags: -Copt-level=3 -Ctarget-cpu=nocona
+            configure: '--enable-wow64'
+
           - name: proton-${{ needs.version.outputs.full_desc }}-x86_64-llvm
             cflags: -O3 -march=nocona -mtune=core-avx2
             rustflags: -Copt-level=3 -Ctarget-cpu=nocona
@@ -77,6 +82,7 @@ jobs:
         include:
           - name: proton-${{ needs.version.outputs.full_desc }}-x86_64
           - name: proton-${{ needs.version.outputs.full_desc }}-x86_64_v3
+          - name: proton-${{ needs.version.outputs.full_desc }}-x86_64-wow64
           - name: proton-${{ needs.version.outputs.full_desc }}-x86_64-llvm
           - name: proton-${{ needs.version.outputs.full_desc }}-arm64
             runner: 'ubuntu-24.04-arm'
