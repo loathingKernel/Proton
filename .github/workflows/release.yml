@@ -34,6 +34,11 @@ jobs:
             rustflags: -Copt-level=3 -Ctarget-cpu=nocona
             configure: '--without-tts --proton-sdk-image=registry.gitlab.steamos.cloud/proton/steamrt4/sdk/x86_64-llvm:4.0.20260331.220802-0'
 
+          - name: proton-${{ github.ref_name }}-x86_64-llvm-wow64
+            cflags: -O3 -march=nocona -mtune=core-avx2
+            rustflags: -Copt-level=3 -Ctarget-cpu=nocona
+            configure: '--enable-wow64 --without-tts --proton-sdk-image=registry.gitlab.steamos.cloud/proton/steamrt4/sdk/x86_64-llvm:4.0.20260331.220802-0'
+
           - name: proton-${{ github.ref_name }}-arm64
             configure: '--target-arch=arm64'
             runner: 'ubuntu-24.04-arm'
