@@ -66,8 +66,6 @@ arm64ec_RUSTFLAGS := -Copt-level=3 -Ctarget-cpu=armv8.2-a
 CFLAGS  = -fwrapv -fno-strict-aliasing
 CFLAGS += -ffunction-sections -fdata-sections -fno-omit-frame-pointer
 CFLAGS += -ffile-prefix-map=$(CCACHE_BASEDIR)=.
-i386_CFLAGS += -D_TIME_BITS=64 -D_FILE_OFFSET_BITS=64
-x86_64_CFLAGS += -D_TIME_BITS=64 -D_FILE_OFFSET_BITS=64
 
 ifneq ($(SUPPRESS_WARNINGS),)
 	CFLAGS += -w
