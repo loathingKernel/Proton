@@ -187,6 +187,22 @@ function configure() {
     if [[ -n "$arg_enable_ccache" ]]; then
       echo "ENABLE_CCACHE := 1"
     fi
+    if [[ -n "$arg_enable_wow64" ]]; then
+      echo "ENABLE_WOW64 := 1"
+    fi
+    if [[ -n "$arg_without_tts" ]]; then
+      echo "WITHOUT_TTS := 1"
+    fi
+    if [[ -n "$arg_without_sarek" ]]; then
+      echo "WITHOUT_SAREK := 1"
+    fi
+    if [[ -n "$arg_without_d7vk" ]]; then
+      echo "WITHOUT_D7VK := 1"
+    fi
+
+    echo "HOST_CFLAGS := ${CFLAGS:--O2 -march=nocona -mtune=core-avx2}"
+    echo "HOST_RUSTFLAGS := ${RUSTFLAGS:--Copt-level=3 -Ctarget-cpu=nocona}"
+    echo "USE_LTO := ${USE_LTO:-0}"
 
     # Include base
     echo ""
@@ -208,6 +224,10 @@ arg_container_engine=""
 arg_docker_opts=""
 arg_relabel_volumes=""
 arg_enable_ccache=""
+arg_enable_wow64=""
+arg_without_tts=""
+arg_without_sarek=""
+arg_without_d7vk=""
 arg_help=""
 invalid_args=""
 function parse_args() {
@@ -257,6 +277,14 @@ function parse_args() {
       arg_relabel_volumes="1"
     elif [[ $arg = --enable-ccache ]]; then
       arg_enable_ccache="1"
+    elif [[ $arg = --enable-wow64 ]]; then
+      arg_enable_wow64="1"
+    elif [[ $arg = --without-tts ]]; then
+      arg_without_tts="1"
+    elif [[ $arg = --without-sarek ]]; then
+      arg_without_sarek="1"
+    elif [[ $arg = --without-d7vk ]]; then
+      arg_without_d7vk="1"
     elif [[ $arg = --proton-sdk-image ]]; then
       val_used=1
       arg_protonsdk_image="$val"
@@ -313,6 +341,14 @@ usage() {
   "$1" "    --relabel-volumes Bind-mounted volumes will be relabeled. Use with caution."
   "$1" ""
   "$1" "    --enable-ccache Mount \$CCACHE_DIR or \$HOME/.ccache inside of the container and use ccache for the build."
+  "$1" ""
+  "$1" "    --enable-wow64 Build wine as wow64 only (excludes i386 unix libs from the build)"
+  "$1" ""
+  "$1" "    --without-tts Disables text-to-speech libraries (OpenFST, VOSK, Kaldi and Piper)"
+  "$1" ""
+  "$1" "    --without-sarek Disables dxvk-sarek"
+  "$1" ""
+  "$1" "    --without-d7vk Disables d7vk"
   "$1" ""
   "$1" "  Steam Runtime"
   "$1" "    Proton builds that are to be installed & run under the steam client must be built with"
