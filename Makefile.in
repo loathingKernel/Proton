@@ -213,6 +213,11 @@ LIBSOUP_MESON_ARGS = \
 	-Dautobahn=disabled \
 	-Dtls_check=false
 
+LIBSOUP_MESON_ARGS += \
+	-Dntlm=disabled \
+	-Dintrospection=disabled \
+	-Dtests=false
+
 LIBSOUP_DEPENDS = nghttp2
 
 $(eval $(call rules-source,libsoup,$(SRCDIR)/libsoup))
