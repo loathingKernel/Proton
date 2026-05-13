@@ -172,6 +172,7 @@ $(eval $(call rules-source,patches,$(SRCDIR)/patches))
 ##
 
 ifneq ($(WITHOUT_STEAMRT_DEPENDS),1)
+include $(SRC)/steamrtdeps/build-libwebp.mk
 endif # WITHOUT_STEAMRT_DEPENDS
 
 
