@@ -42,6 +42,8 @@ import protonfixes
 
 #To enable debug logging, copy "user_settings.sample.py" to "user_settings.py"
 #and edit it if needed.
+import utilities
+
 
 CURRENT_PREFIX_VERSION="11.0-100"
 
@@ -531,7 +533,6 @@ class Proton:
         self.user_settings_file = self.path("user_settings.py")
         self.wine_bin = self.bin_dir + "wine"
         self.wineserver_bin = self.bin_dir + "wineserver"
-        self.dist_lock = FileLock(self.path("dist.lock"), timeout=-1)
         self.host_pe_arch = "x86_64-windows"
         self.wow64_pe_arch = "i386-windows"
 
@@ -1153,10 +1154,17 @@ class CompatData:
                     try_copy(g_proton.default_pfx_dir + "drive_c/windows/syswow64/" + f + ".dll", "drive_c/windows/syswow64",
                             prefix=self.prefix_dir, track_file=tracked_files, link_debug=True)
 
+                use_dxvk_sarek = "dxvksarek" in g_session.compat_config and os.path.isdir(g_proton.lib_dir + "wine/dxvk-sarek")
+                if use_dxvk_sarek:
+                    use_nvapi = False
+                    dxvk_path = "dxvk-sarek/"
+                else:
+                    dxvk_path = "dxvk/"
+
                 for f in dxvkfiles:
-                    try_copy(g_proton.arch_pe_dir("wine/dxvk", False) + f + ".dll", "drive_c/windows/system32",
+                    try_copy(g_proton.arch_pe_dir("wine/" + dxvk_path, False) + f + ".dll", "drive_c/windows/system32",
                             prefix=self.prefix_dir, track_file=tracked_files, link_debug=True)
-                    try_copy(g_proton.arch_pe_dir("wine/dxvk", True) + f + ".dll", "drive_c/windows/syswow64",
+                    try_copy(g_proton.arch_pe_dir("wine/" + dxvk_path, True) + f + ".dll", "drive_c/windows/syswow64",
                             prefix=self.prefix_dir, track_file=tracked_files, link_debug=True)
                     g_session.dlloverrides[f] = "n"
 
@@ -1169,6 +1177,21 @@ class CompatData:
                     try_copy(g_proton.arch_pe_dir("wine/vkd3d-proton", True) + f + ".dll", "drive_c/windows/syswow64",
                             prefix=self.prefix_dir, track_file=tracked_files, link_debug=True, optional=optional)
                     g_session.dlloverrides[f] = "n"
+
+                if use_dxvk_sarek:
+                    d7vk_path = "dxvk-sarek/"
+                else:
+                    d7vk_path = "d7vk/"
+                use_d7vk_ddraw = "d7vkddraw" in g_session.compat_config and os.path.isdir(g_proton.lib_dir + "wine/" + d7vk_path)
+                if use_d7vk_ddraw:
+                    try_copy(g_proton.default_pfx_dir + "drive_c/windows/syswow64/ddraw.dll", "drive_c/windows/syswow64/ddraw_.dll",
+                            prefix=self.prefix_dir, track_file=tracked_files, link_debug=True)
+                    try_copy(g_proton.arch_pe_dir("wine/" + d7vk_path, True) + "ddraw.dll", "drive_c/windows/syswow64",
+                            prefix=self.prefix_dir, track_file=tracked_files, link_debug=True, optional=optional)
+                    g_session.dlloverrides["ddraw"] = "n,b"
+                else:
+                    try_copy(g_proton.default_pfx_dir + "drive_c/windows/syswow64/ddraw.dll", "drive_c/windows/syswow64",
+                            prefix=self.prefix_dir, track_file=tracked_files, link_debug=True)
 
                 for f in icufiles:
                     dst = "drive_c/windows/system32/" + f + ".dll"
@@ -1220,9 +1243,6 @@ class CompatData:
             setup_game_dir_drive()
             setup_steam_dir_drive()
             setup_openvr_paths()
-
-            # add Steam ffmpeg libraries to path
-            prepend_to_env_str(g_session.env, ld_path_var, steamdir + "/ubuntu12_64/video/:" + steamdir + "/ubuntu12_32/video/:" + steamdir + "/steamrtarm64/video/", ":")
 
 def comma_escaped(s):
     escaped = False
@@ -1704,11 +1724,14 @@ class Session:
         if "wined3d11" in self.compat_config:
             self.compat_config.add("wined3d")
 
+        self.check_environment("PROTON_USE_WOW64", "wow64")
         if not self.check_environment("PROTON_USE_WINED3D", "wined3d"):
             self.check_environment("PROTON_USE_WINED3D11", "wined3d")
+        self.check_environment("PROTON_D7VK_DDRAW", "d7vkddraw")
         self.check_environment("PROTON_DXVK_D3D8", "dxvkd3d8")
         self.check_environment("PROTON_NO_D3D11", "nod3d11")
         self.check_environment("PROTON_NO_D3D10", "nod3d10")
+        self.check_environment("PROTON_DXVK_SAREK", "dxvksarek")
         self.check_environment("PROTON_NO_ESYNC", "noesync")
         self.check_environment("PROTON_NO_FSYNC", "nofsync")
         self.check_environment("PROTON_FORCE_LARGE_ADDRESS_AWARE", "forcelgadd")
@@ -1908,6 +1931,12 @@ class Session:
             os.environ.get("SteamDeck", 0) == "1"):
             # Disable hidraw for Sony DualShock and DualSense controllers.
             self.env["PROTON_DISABLE_HIDRAW"] = "0x054C/0x05C4,0x054C/0x09CC,0x054C/0x0BA0,0x054C/0x0CE6,0x054C/0x0DF2"
+
+        if "dxvksarek" in self.compat_config:
+            threads = os.cpu_count() - (2 if os.cpu_count() > 4 else (1 if os.cpu_count() > 2 else 0))
+            append_to_env_str(self.env, "DXVK_CONFIG", f"dxvk.numCompilerThreads={threads}", ";")
+            append_to_env_str(self.env, "DXVK_CONFIG", f"dxvk.numAsyncThreads={threads}", ";")
+            append_to_env_str(self.env, "DXVK_CONFIG", f"dxvk.numDyasyncThreads={threads}", ";")
 
 
         if "__GLVND_DISALLOW_PATCHING" not in self.env:
@@ -2116,8 +2145,6 @@ if __name__ == "__main__":
 
     g_proton = Proton(os.path.dirname(sys.argv[0]))
 
-    g_proton.cleanup_legacy_dist()
-    g_proton.do_steampipe_fixups()
 
     g_compatdata = CompatData(os.environ["STEAM_COMPAT_DATA_PATH"])
 
@@ -2126,7 +2153,8 @@ if __name__ == "__main__":
     g_session.init_wine()
 
     if g_proton.missing_default_prefix():
-        g_proton.make_default_prefix()
+        log("Default prefix is missing, something is very wrong.")
+        sys.exit(1)
 
     g_session.init_session(sys.argv[1] != "runinprefix")
 

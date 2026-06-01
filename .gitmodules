@@ -1,15 +1,21 @@
 [submodule "wine"]
 	path = wine
-	url = ../wine
+	url = https://github.com/ValveSoftware/wine.git
 [submodule "dxvk"]
 	path = dxvk
 	url = https://github.com/doitsujin/dxvk.git
+[submodule "dxvk-sarek"]
+	path = dxvk-sarek
+	url = https://github.com/pythonlover02/DXVK-Sarek.git
 [submodule "openvr"]
 	path = openvr
 	url = https://github.com/ValveSoftware/openvr
 [submodule "fonts/liberation-fonts"]
 	path = fonts/liberation-fonts
 	url = https://github.com/liberationfonts/liberation-fonts
+[submodule "libwebp"]
+	path = libwebp
+	url = https://github.com/webmproject/libwebp.git
 [submodule "gstreamer"]
 	path = gstreamer
 	url = https://github.com/GStreamer/gstreamer.git
@@ -75,6 +81,12 @@
 [submodule "FEX"]
 	path = FEX
 	url = https://github.com/FEX-Emu/FEX/
+[submodule "nghttp2"]
+	path = nghttp2
+	url = https://github.com/nghttp2/nghttp2.git
 [submodule "libsoup"]
 	path = libsoup
 	url = https://github.com/GNOME/libsoup.git
+[submodule "d7vk"]
+	path = d7vk
+	url = https://github.com/WinterSnowfall/d7vk.git
