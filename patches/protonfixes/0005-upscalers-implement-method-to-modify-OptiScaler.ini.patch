@@ -1,0 +1,91 @@
+From 0b27271e4b8b3eb1c314f0659f1d079f6c588646 Mon Sep 17 00:00:00 2001
+From: Stelios Tsampas <loathingkernel@gmail.com>
+Date: Mon, 1 Jun 2026 19:25:32 +0300
+Subject: [PATCH 5/5] upscalers: implement method to modify OptiScaler.ini
+
+Config values are passed through the `PROTON_OPTISCALER_CONFIG` environment
+variable. The config is a semicolon (`;`) separated string of individual options.
+For each option the template is `{header}.{option}={value}`, i.e to set the following
+```
+[Upscalers]
+Dx11Upscaler=fsr31
+Dx12Upscaler=dlss
+```
+the config should be
+```
+PROTON_OPTISCALER_CONFIG="Upscalers.Dx11Upscaler=fsr31;Upscalers.Dx12Upscaler=dlss"`
+```
+
+To avoid mistakes, config options should already exist in `Optiscaler.ini`.
+
+The changes are to the config are permanent, it has to be either manually edited or
+a different config should be applied through the env variable.
+
+Using this will also remove any comments from the `OptiScaler.ini` file.
+---
+ upscalers.py | 30 ++++++++++++++++++++++++++++--
+ 1 file changed, 28 insertions(+), 2 deletions(-)
+
+diff --git a/upscalers.py b/upscalers.py
+index 6bd3e7f..311ee67 100644
+--- a/upscalers.py
++++ b/upscalers.py
+@@ -1,5 +1,5 @@
+ """Download and setup DLLs to upgrade various upscalers"""
+-
++import configparser
+ import hashlib
+ import json
+ import lzma
+@@ -612,6 +612,7 @@ def setup_upscaler(
+ 
+ 
+ def setup_optiscaler(
++    env: dict,
+     compat_dir: str,
+     prefix_dir: str,
+     version: str,
+@@ -619,6 +620,31 @@ def setup_optiscaler(
+     log.info(f'Setting up OptiScaler version "{version}".')
+     download_optiscaler(compat_dir, prefix_dir, version)
+     enabled = check_optiscaler(compat_dir, prefix_dir, version, ignore_version=True)
++
++    if enabled and (env_config := env.get('PROTON_OPTISCALER_CONFIG', '')):
++        path, _ = __get_opti_files(version)
++        ini = os.path.join(prefix_dir, path, 'OptiScaler.ini')
++        parser = configparser.ConfigParser()
++        parser.read(ini)
++
++        env_config_parts = env_config.split(';')
++        env_config_parts = (part for part in env_config_parts if part)
++        for part in env_config_parts:
++            try:
++                option_path, value = part.split('=')
++                section, option = option_path.split('.')
++            except Exception as e:
++                log.crit(f'Malformed config "{part}"')
++                log.debug(e)
++                continue
++            if section in parser and option in parser[section]:
++                parser[section][option] = value
++            else:
++                log.warn(f'Ignoring unknown option "{f"{section}.{option}"}"')
++
++        with open(ini, 'w') as ini_fd:
++            parser.write(ini_fd)
++
+     return enabled
+ 
+ 
+@@ -686,7 +712,7 @@ def setup_upscalers(
+             upscaler_replace.add(name)
+ 
+     if 'optiscaler' in compat_config:
+-        if setup_optiscaler(compat_dir, prefix_dir, optiscaler_version):
++        if setup_optiscaler(env, compat_dir, prefix_dir, optiscaler_version):
+             log.info('OptiScaler enabled.')
+             upscaler_replace.clear()
+             if 'fsr4' in compat_config or 'fsr4rdna3' in compat_config:
+-- 
+2.54.0
+

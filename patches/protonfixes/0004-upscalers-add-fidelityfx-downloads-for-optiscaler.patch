@@ -1,0 +1,355 @@
+From ecf9b8229edbcee32a6fc854d305b6fed1f8e9bf Mon Sep 17 00:00:00 2001
+From: Stelios Tsampas <loathingkernel@gmail.com>
+Date: Thu, 14 May 2026 03:43:39 +0300
+Subject: [PATCH 4/5] upscalers: add fidelityfx downloads for optiscaler
+
+---
+ upscalers.py | 199 ++++++++++++++++++++++++++++++++++-----------------
+ 1 file changed, 134 insertions(+), 65 deletions(-)
+
+diff --git a/upscalers.py b/upscalers.py
+index 629b776..6bd3e7f 100644
+--- a/upscalers.py
++++ b/upscalers.py
+@@ -84,6 +84,7 @@ __xess_version_file = 'xess_version'
+ __fsr3_version_file = 'fsr3_version'
+ __fsr4_version_file = 'fsr4_version'
+ __opti_version_file = 'opti_version'
++__fdfx_version_file = 'fdfx_version'
+ 
+ 
+ def __get_opti_files(version: str = 'default') -> tuple[str, dict]:
+@@ -126,6 +127,19 @@ def __get_fsr3_dlls(version: str = 'default') -> dict:
+     }
+ 
+ 
++def __get_fdfx_dlls(version: str = 'default') -> dict:
++    return {
++        'drive_c/windows/system32/umu/amd_fidelityfx_framegeneration_dx12.dll': __get_dll_manifest(
++            'fsr_40_fg_dx12', version
++        ),
++        'drive_c/windows/system32/umu/amd_fidelityfx_loader_dx12.dll': __get_dll_manifest(
++            'fsr_40_ldr_dx12', version
++        ),
++        'drive_c/windows/system32/umu/amd_fidelityfx_upscaler_dx12.dll': __get_dll_manifest(
++            'fsr_40_up_dx12', version
++        ),
++    }
++
+ def __get_fsr4_dlls(version: str = 'default') -> dict:
+     __fsr4_dlls = {
+         '4.0.0': {
+@@ -170,7 +184,7 @@ def __get_fsr4_dlls(version: str = 'default') -> dict:
+         return cached_file.exists()
+ 
+     if version == 'default' or version not in __fsr4_dlls.keys():
+-        version = '4.0.3'
++        version = '4.1.0'
+ 
+     item = __fsr4_dlls[version]
+     if not (__dll_download_exists(item['download_url']) or _cached_file_exists(item)):
+@@ -189,6 +203,37 @@ def __get_fsr4_dlls(version: str = 'default') -> dict:
+     }
+ 
+ 
++def __get_upscaler_items(name: str, version: str) -> tuple[dict, str]:
++    upscalers = {
++        'dlss': (__get_dlss_dlls, __dlss_version_file),
++        'xess': (__get_xess_dlls, __xess_version_file),
++        'fsr3': (__get_fsr3_dlls, __fsr3_version_file),
++        'fsr4': (__get_fsr4_dlls, __fsr4_version_file),
++        'fdfx': (__get_fdfx_dlls, __fdfx_version_file),
++    }
++    get_items, version_file = upscalers[name]
++    try:
++        items = get_items(version)
++    except Exception as e:
++        log.crit(f'Failed to get "{name}" versions from manifest')
++        log.crit(e)
++        raise e
++
++    return items, version_file
++
++
++def __get_local_versions(version_file: str) -> dict:
++    try:
++        with open(version_file, encoding='utf-8') as version_fd:
++            data = version_fd.read()
++        local_versions = json.loads(data)
++    except Exception as e:
++        log.warn(f'Error while reading version file "{version_file}"')
++        raise e
++
++    return local_versions
++
++
+ def __check_upscaler_file(
+     prefix_dir: str, dst: str, item: dict, version: dict, ignore_version: bool
+ ) -> bool:
+@@ -236,19 +281,16 @@ def __check_upscaler_files(
+     prefix_dir: str, items: dict, version_file: str, ignore_version: bool
+ ) -> bool:
+     try:
+-        with open(version_file, encoding='utf-8') as version_fd:
+-            version = version_fd.read()
+-        version = json.loads(version)
++        local_versions = __get_local_versions(version_file)
+         # test if new files and their attributes exist in the tracking file
+         for dst in items.keys():
+-            _ = version[dst].get('md5_hash')
++            _ = local_versions[dst].get('md5_hash')
+     except Exception as e:
+-        log.warn(f'Error while reading version file "{version_file}"')
+-        log.warn(repr(e))
++        log.warn(e)
+         return False
+ 
+     valid_files = tuple(
+-        __check_upscaler_file(prefix_dir, dst, items[dst], version[dst], ignore_version)
++        __check_upscaler_file(prefix_dir, dst, items[dst], local_versions[dst], ignore_version)
+         for dst in items.keys()
+     )
+ 
+@@ -269,19 +311,11 @@ def check_upscaler(
+     version: the version of the upscaler dll to download
+     ignore_version: ignore version mismatch but still check if the dlls are present
+     """
+-    upscalers = {
+-        'dlss': (__get_dlss_dlls, __dlss_version_file),
+-        'xess': (__get_xess_dlls, __xess_version_file),
+-        'fsr3': (__get_fsr3_dlls, __fsr3_version_file),
+-        'fsr4': (__get_fsr4_dlls, __fsr4_version_file),
+-    }
+-    get_items, version_file = upscalers[name]
+     try:
+-        items = get_items(version)
+-    except Exception as e:
+-        log.crit(f'Failed to get "{name}" versions from manifest')
+-        log.crit(e)
++        items, version_file = __get_upscaler_items(name, version)
++    except Exception:
+         return False
++
+     return __check_upscaler_files(
+         prefix_dir,
+         items,
+@@ -311,19 +345,16 @@ def check_optiscaler(
+ 
+     version_file = os.path.join(compat_dir, __opti_version_file)
+     try:
+-        with open(version_file, encoding='utf-8') as version_fd:
+-            version = version_fd.read()
+-        version = json.loads(version)
++        local_versions = __get_local_versions(version_file)
+         # test if new files and their attributes exist in the tracking file
+         for dst in [os.path.join(path, f) for f in item['md5_hash']]:
+-            _ = version[dst].get('md5_hash')
++            _ = local_versions[dst].get('md5_hash')
+     except Exception as e:
+-        log.warn(f'Error while reading version file "{version_file}"')
+-        log.warn(repr(e))
++        log.warn(e)
+         return False
+ 
+     dst_hashes = {}
+-    for dst in version:
++    for dst in local_versions:
+         if not dst.endswith('.dll'):
+             continue
+         target = os.path.join(prefix_dir, dst)
+@@ -332,7 +363,7 @@ def check_optiscaler(
+             return False
+         with open(target, 'rb') as dst_fd:
+             dst_md5 = hashlib.md5(dst_fd.read()).hexdigest().lower()
+-        version_md5 = version[dst]['md5_hash']
++        version_md5 = local_versions[dst]['md5_hash']
+         if version_md5 and dst_md5 != version_md5.lower():
+             log.warn(f'MD5 checksum mismatch between version file and prefix "{dst}"')
+             return False
+@@ -347,7 +378,7 @@ def check_optiscaler(
+             if not os.path.isfile(target):
+                 log.warn(f'Missing file from prefix "{dst}"')
+                 return False
+-            if version[dst]['version'] != item['version']:
++            if local_versions[dst]['version'] != item['version']:
+                 log.warn(f'Version mismatch between configuration and prefix "{dst}"')
+                 return False
+             item_md5 = item['md5_hash'][name]
+@@ -490,6 +521,7 @@ def download_upscaler(
+         'xess': (__get_xess_dlls, __download_extract_zip, __xess_version_file),
+         'fsr3': (__get_fsr3_dlls, __download_extract_zip, __fsr3_version_file),
+         'fsr4': (__get_fsr4_dlls, __download_fsr4, __fsr4_version_file),
++        'fdfx': (__get_fdfx_dlls, __download_extract_zip, __fdfx_version_file),
+     }
+     get_items, download_func, version_file = upscalers[name]
+     try:
+@@ -518,17 +550,15 @@ def download_optiscaler(
+     log.info('Failed to validate "optiscaler" files.')
+ 
+     version_file = os.path.join(compat_dir, __opti_version_file)
+-
+     try:
+-        with open(version_file, encoding='utf-8') as version_fd:
+-            local_versions = json.loads(version_fd.read())
+-    except FileNotFoundError:
++        local_versions = __get_local_versions(version_file)
++    except Exception:
+         local_versions = {}
+         pass
+ 
+     try:
+         path, item = __get_opti_files(version)
+-        log.info(f'Updating optiscaler "{os.path.basename(item["version"])}"')
++        log.info(f'Updating OptiScaler "{os.path.basename(item["version"])}"')
+ 
+         url_path = Path(unquote(urlparse(item['download_url']).path))
+         cache_dir = config.path.cache_dir.joinpath('upscalers')
+@@ -561,7 +591,7 @@ def download_optiscaler(
+             }
+ 
+     except Exception as e:
+-        log.crit('Failed to download optiscaler package.')
++        log.crit('Failed to download OptiScaler package.')
+         log.crit(e)
+         return
+ 
+@@ -570,36 +600,63 @@ def download_optiscaler(
+ 
+ 
+ def setup_upscaler(
+-    env: dict,
+-    key: str,
+     name: str,
+     compat_dir: str,
+     prefix_dir: str,
+-    version: str = 'default',
++    version: str,
+ ) -> bool:
+-    version = env[key] if env.get(key, '0') not in {'0', '1'} else version
++    log.info(f'Setting up {name.upper()} version {version}.')
+     download_upscaler(name, compat_dir, prefix_dir, version)
+     enabled = check_upscaler(name, compat_dir, prefix_dir, version, ignore_version=True)
+-    if enabled:
+-        log.info(f'Automatic {name.upper()} upgrade enabled.')
+     return enabled
+ 
+ 
+ def setup_optiscaler(
+-    env: dict,
+-    key: str,
+     compat_dir: str,
+     prefix_dir: str,
+-    version: str = 'default',
++    version: str,
+ ) -> bool:
+-    version = env[key] if env.get(key, '0') not in {'0', '1'} else version
++    log.info(f'Setting up OptiScaler version "{version}".')
+     download_optiscaler(compat_dir, prefix_dir, version)
+     enabled = check_optiscaler(compat_dir, prefix_dir, version, ignore_version=True)
+-    if enabled:
+-        log.info('Optiscaler enabled.')
+     return enabled
+ 
+ 
++def clean_upscaler(
++    name: str,
++    compat_dir: str,
++    prefix_dir: str,
++) -> bool:
++    try:
++        _, version_file = __get_upscaler_items(name, 'default')
++    except Exception:
++        return False
++
++    log.info(f'Cleaning {name.upper()} files.')
++
++    version_file = os.path.join(compat_dir, version_file)
++    try:
++        local_versions = __get_local_versions(version_file)
++    except Exception:
++        return False
++
++    if os.path.exists(version_file):
++        log.debug(f'Removing {version_file}')
++        os.unlink(version_file)
++
++    for path in local_versions:
++        file = os.path.join(prefix_dir, path)
++        if os.path.exists(file):
++            log.debug(f'Removing {file}')
++            os.unlink(file)
++
++    return True
++
++
++def get_version(env: dict, key: str, fallback: str) -> str:
++    return env[key] if env.get(key, '0') not in {'0', '1'} else fallback
++
++
+ def setup_upscalers(
+     compat_config: set, env: dict, compat_dir: str, prefix_dir: str
+ ) -> None:
+@@ -607,29 +664,41 @@ def setup_upscalers(
+ 
+     usage: setup_upscalers(g_session.compat_config, g_session.env, g_compatdata.base_dir, g_compatdata.prefix_dir)
+     """
++    dlss_version = get_version(env, 'PROTON_DLSS_UPGRADE', 'default')
++    xess_version = get_version(env, 'PROTON_XESS_UPGRADE', 'default')
++    fsr3_version = get_version(env, 'PROTON_FSR3_UPGRADE', '1.0.1.41314')
++    fsr4rdna3_version = get_version(env, 'PROTON_FSR4_RDNA3_UPGRADE', '4.0.0')
++    fsr4_version = get_version(env, 'PROTON_FSR4_UPGRADE', 'default')
++    fdfx_version = fsr4rdna3_version if 'fsr4rdna3' in compat_config else fsr4_version
++    optiscaler_version = get_version(env, 'PROTON_USE_OPTISCALER', 'default')
++
+     upscaler_replace = set()
+-    if 'dlss' in compat_config or 'optiscaler' in compat_config:
+-        if setup_upscaler(env, 'PROTON_DLSS_UPGRADE', 'dlss', compat_dir, prefix_dir):
+-            upscaler_replace.add('dlss')
+-    if 'xess' in compat_config or 'optiscaler' in compat_config:
+-        if setup_upscaler(env, 'PROTON_XESS_UPGRADE', 'xess', compat_dir, prefix_dir):
+-            upscaler_replace.add('xess')
+-    if 'fsr3' in compat_config:
+-        if setup_upscaler(env, 'PROTON_FSR3_UPGRADE', 'fsr3', compat_dir, prefix_dir):
+-            upscaler_replace.add('fsr3')
+-    if 'fsr4rdna3' in compat_config:
+-        if setup_upscaler(
+-            env, 'PROTON_FSR4_RDNA3_UPGRADE', 'fsr4', compat_dir, prefix_dir, '4.0.0'
+-        ):
+-            upscaler_replace.add('fsr4')
+-    elif 'fsr4' in compat_config:
+-        if setup_upscaler(env, 'PROTON_FSR4_UPGRADE', 'fsr4', compat_dir, prefix_dir):
+-            upscaler_replace.add('fsr4')
++    upscalers = (
++        ('dlss', dlss_version, 'dlss' in compat_config),
++        ('xess', xess_version, 'xess' in compat_config or 'optiscaler' in compat_config),
++        ('fsr3', fsr3_version, 'fsr3' in compat_config or 'optiscaler' in compat_config),
++        ('fsr4', fdfx_version, 'fsr4' in compat_config or 'fsr4rdna3' in compat_config),
++    )
++    for upscaler in upscalers:
++        name, version, enabled = upscaler
++        if enabled and setup_upscaler(name, compat_dir, prefix_dir, version):
++            log.info(f'Automatic {name.upper()} upgrade enabled.')
++            upscaler_replace.add(name)
+ 
+     if 'optiscaler' in compat_config:
+-        if setup_optiscaler(env, 'PROTON_USE_OPTISCALER', compat_dir, prefix_dir):
++        if setup_optiscaler(compat_dir, prefix_dir, optiscaler_version):
++            log.info('OptiScaler enabled.')
+             upscaler_replace.clear()
+-            env['WINE_OPTISCALER_NAME'] = env.get('PROTON_OPTISCALER_NAME','dxgi.dll')
++            if 'fsr4' in compat_config or 'fsr4rdna3' in compat_config:
++                if fdfx_version in {'4.0.0', '4.0.1'}:
++                    clean_upscaler('fdfx', compat_dir, prefix_dir)
++                else:
++                    setup_upscaler('fdfx', compat_dir, prefix_dir, fdfx_version)
++                if 'fsr4rdna3' in compat_config:
++                    env['DXIL_SPIRV_CONFIG'] = 'wmma_rdna3_workaround'
++            else:
++                setup_upscaler('dlss', compat_dir, prefix_dir, dlss_version)
++            env['WINE_OPTISCALER_NAME'] = env.get('PROTON_OPTISCALER_NAME', 'dxgi.dll')
+ 
+     if 'fsr4' in upscaler_replace:
+         env['FSR4_UPGRADE'] = '1'
+-- 
+2.54.0
+
