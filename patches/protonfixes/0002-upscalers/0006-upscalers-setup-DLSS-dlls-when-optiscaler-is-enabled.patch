@@ -1,0 +1,41 @@
+From d1349462db54cc1aeb99b812cebbdc7050f0e80d Mon Sep 17 00:00:00 2001
+From: Stelios Tsampas <loathingkernel@gmail.com>
+Date: Sat, 6 Jun 2026 18:33:49 +0300
+Subject: [PATCH 6/6] upscalers: setup DLSS dlls when optiscaler is enabled
+
+fixes issues with spoofing dlss inputs for some games.
+---
+ upscalers.py | 5 ++---
+ 1 file changed, 2 insertions(+), 3 deletions(-)
+
+diff --git a/upscalers.py b/upscalers.py
+index b09c466..217fcb2 100644
+--- a/upscalers.py
++++ b/upscalers.py
+@@ -705,12 +705,13 @@ def setup_upscalers(
+     fsr3_version = get_version(env, 'PROTON_FSR3_UPGRADE', '1.0.1.41314')
+     fsr4rdna3_version = get_version(env, 'PROTON_FSR4_RDNA3_UPGRADE', '4.0.0')
+     fsr4_version = get_version(env, 'PROTON_FSR4_UPGRADE', 'default')
++    # fdfx_version controls both the amdxcffx64.dll version and the amd_fidelityfx_*.dll versions
+     fdfx_version = fsr4rdna3_version if 'fsr4rdna3' in compat_config else fsr4_version
+     optiscaler_version = get_version(env, 'PROTON_USE_OPTISCALER', 'default')
+ 
+     upscaler_replace = set()
+     upscalers = (
+-        ('dlss', dlss_version, 'dlss' in compat_config),
++        ('dlss', dlss_version, 'dlss' in compat_config or 'optiscaler' in compat_config),
+         ('xess', xess_version, 'xess' in compat_config or 'optiscaler' in compat_config),
+         ('fsr3', fsr3_version, 'fsr3' in compat_config or 'optiscaler' in compat_config),
+         ('fsr4', fdfx_version, 'fsr4' in compat_config or 'fsr4rdna3' in compat_config),
+@@ -732,8 +733,6 @@ def setup_upscalers(
+                     setup_upscaler('fdfx', compat_dir, prefix_dir, fdfx_version)
+                 if 'fsr4rdna3' in compat_config:
+                     env['DXIL_SPIRV_CONFIG'] = 'wmma_rdna3_workaround'
+-            else:
+-                setup_upscaler('dlss', compat_dir, prefix_dir, dlss_version)
+             env['WINE_OPTISCALER_NAME'] = env.get('PROTON_OPTISCALER_NAME', 'dxgi.dll')
+ 
+     if 'fsr4' in upscaler_replace:
+-- 
+2.54.0
+
