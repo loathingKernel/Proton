@@ -1,6 +1,6 @@
 [submodule "wine"]
 	path = wine
-	url = ../wine
+	url = https://github.com/ValveSoftware/wine.git
 [submodule "dxvk"]
 	path = dxvk
 	url = https://github.com/doitsujin/dxvk.git
@@ -10,6 +10,24 @@
 [submodule "fonts/liberation-fonts"]
 	path = fonts/liberation-fonts
 	url = https://github.com/liberationfonts/liberation-fonts
+[submodule "steamrtdeps/libxml2"]
+	path = steamrtdeps/libxml2
+	url = https://github.com/GNOME/libxml2.git
+[submodule "steamrtdeps/libwebp"]
+	path = steamrtdeps/libwebp
+	url = https://github.com/webmproject/libwebp.git
+[submodule "steamrtdeps/xz"]
+	path = steamrtdeps/xz
+	url = https://github.com/tukaani-project/xz.git
+[submodule "steamrtdeps/speex"]
+	path = steamrtdeps/speex
+	url = https://github.com/xiph/speex.git
+[submodule "steamrtdeps/speexdsp"]
+	path = steamrtdeps/speexdsp
+	url = https://github.com/xiph/speexdsp.git
+[submodule "steamrtdeps/flac"]
+	path = steamrtdeps/flac
+	url = https://github.com/xiph/flac.git
 [submodule "gstreamer"]
 	path = gstreamer
 	url = https://github.com/GStreamer/gstreamer.git
@@ -78,3 +96,9 @@
 [submodule "libsoup"]
 	path = libsoup
 	url = https://github.com/GNOME/libsoup.git
+[submodule "extras/dxvk-sarek"]
+	path = extras/dxvk-sarek
+	url = https://github.com/pythonlover02/DXVK-Sarek.git
+[submodule "extras/d7vk"]
+	path = extras/d7vk
+	url = https://github.com/WinterSnowfall/d7vk.git
