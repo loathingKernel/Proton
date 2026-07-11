@@ -19,17 +19,17 @@
     - Moving fullscreen windows between different outputs
     - Heuristic to determine which monitor is most likely the primary one
     - Fractional scaling protocol support (Upstreamed in wine 11.12)
-    - Support for flashing the task bar icon through `xdg-activation-v1`
+    - Support for flashing the task bar icon through `xdg-activation-v1` (Will not be upstreamed, the protocol doesn't explictly enforce this behavior)
     - Locked modifier key support
     - Improved keyboard layout support, dead key support, and various other keyboard fixes
     - Pointer warp protocol support (Now upstreamed by someone else in Wine 11.9)
-    - Pointer rawinput support
+    - Pointer rawinput support (Upstreamed in wine 11.13, thanks Rémi Bernon)
     - Touchpad scrolling support
     - Touch input support
     - Window minimization and focus loss support
-    - Window tiling support
+    - Improved window tiling support
     - xdg-popup support
-    - Improved fullscreen window support (Side effect of server side decorations implementation)
+    - Explicit fullscreen support
     - Hack to move windows entirely on screen (resolves being unable to interact with portions of windows)
     - Wayland client surface caching (fixes DMABUF modifier feedback loops when playing some Vulkan games with direct scanout)
     - Various bug fixes
