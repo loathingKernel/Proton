@@ -20,6 +20,7 @@
     - Heuristic to determine which monitor is most likely the primary one
     - Fractional scaling protocol support (Upstreamed in wine 11.12)
     - Window activation support through `xdg-activation-v1`
+    - Locked modifier key support
     - Improved keyboard layout support, dead key support, and various other keyboard fixes
     - Pointer warp protocol support (Now upstreamed by someone else in Wine 11.9)
     - Pointer rawinput support (Upstreamed in wine 11.13, thanks Rémi Bernon)
