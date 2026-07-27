@@ -282,9 +282,6 @@ GST_BASE_MESON_ARGS := \
 
 GST_BASE_MESON_ARGS += \
 	-Dintrospection=disabled \
-	-Dgobject-cast-checks=disabled \
-	-Dglib-asserts=disabled \
-	-Dglib-checks=disabled \
 	-Dnls=disabled \
 	-Dexamples=disabled \
 	-Dtests=disabled \
@@ -350,9 +347,6 @@ GST_BAD_MESON_ARGS := \
 # Borrowed from proton-cachyos
 GST_BAD_MESON_ARGS += \
 	-Dintrospection=disabled \
-	-Dgobject-cast-checks=disabled \
-	-Dglib-asserts=disabled \
-	-Dglib-checks=disabled \
 	-Dnls=disabled \
 	-Dexamples=disabled \
 	-Dtests=disabled \
@@ -460,9 +454,6 @@ $(eval $(call rules-meson,gst_bad,aarch64,unix))
 
 GST_UGLY_MESON_ARGS := \
 	-Dauto_features=disabled \
-	-Dgobject-cast-checks=disabled \
-	-Dglib-asserts=disabled \
-	-Dglib-checks=disabled \
 	-Dnls=disabled \
 	-Dtests=disabled \
 	-Ddoc=disabled \
@@ -913,7 +904,7 @@ WINE_AUTOCONF_ARGS = \
   --with-gstreamer \
   --with-ffmpeg \
   --without-oss \
-  --with-libpcap \
+  --with-pcap \
   --disable-tests
 
 WINE_x86_64_AUTOCONF_ARGS = \
@@ -1700,7 +1691,7 @@ endif
 ## default_pfx
 ##
 
-default_pfx: wine gst_good gst_bad gst_ugly gst_libav gst_plugins_rs lsteamclient steamexe vrclient wineopenxr $(WINEOPENXR64_JSON) dxvk dxvk-nvapi vkd3d-proton
+default_pfx: wine gst_good gst_bad gst_ugly gst_libav gst_plugins_rs lsteamclient steamexe vrclient wineopenxr $(WINEOPENXR64_JSON) dxvk dxvk-nvapi vkd3d-proton protonfixes
 	find $(DST_LIBDIR)/wine -type f -execdir chmod a-w '{}' '+'
 	rm -rf $(abspath $(DIST_PREFIX))
 	rm -rf $(abspath $(DIST_PREFIX_ARM64))
