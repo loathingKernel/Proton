@@ -11,6 +11,7 @@
 - FSR 4.1.1 (and prior) support, including redstone features like machine learning frame generation (MLFG)
     - FSR4-I8 upscaling support on RDNA2/3, FSR4-FP8 + redstone on RDNA4
     - Anti-Lag 2 on D3D12 games (Upstreamed in Proton experimental)
+- Improved implementation of AMD Driver DLLs `amdxc64.dll`, `atiadlxx.dll` and `atidxx64.dll` to allow native AMD GPU Services to function under Proton.
 - winewayland support with various improvements compared to upstream Wine
     - EDID emulation support (with CTA-861 HDR static metadata extension for HDR)
     - Color accurate windows HDR using `windows_bt2100` and `windows_scrgb` image descriptions.
@@ -98,12 +99,13 @@ When working on Proton-EM I choose to name tags in a certain way:
 
 | Compat config string  | Environment Variable               | Description  |
 | :-------------------- | :--------------------------------- | :----------- |
-| `wayland`             | `PROTON_ENABLE_WAYLAND`,`PROTON_USE_WAYLAND`      | Enables the winewayland driver |
-| `sdlinput`            | `PROTON_USE_SDL`                                  | Uses SDL2/3 for gamepad input instead of steam input |
-|                       | `PROTON_EMULATE_STEAMINPUT`                       | Emulate Steam Input hooks with SDL input. This does not emulate the ISteamInput interface used by a handful of games on Steam (https://partner.steamgames.com/doc/api/isteaminput). Emulation for that interface is beyond my scope, since it would just be easier to hack steam overlay to make it work on wayland native apps. |
-|                       | `FSR4_UPGRADE`                                    | Upgrade FSR3/4 to newer FSR4 (FP8 or I8) using AMD's FSR 4.1.1 amdxcffx64.dll taken from Proton Experimental. This option is not needed on RDNA2-4 discrete GPUs |
-|                       | `MLFG_UPGRADE`                                    | Enables FSR4 MLFG upgrade to use redstone frame generation. Can be used in tandom with FSR4-I8 on RDNA3 using `DXIL_SPIRV_CONFIG=wmma_rdna3_workaround`. |
-|                       | `FSR_WATERMARK`, `FSR_FG_WATERMARK`               | Enables watermarks for FSR Upscaling and FG. FG watermark is incorrect on 4.1.1 (reports MLFG even when FP8 is not supported). Upscaling watermark works correctly. You can use this to determine which FSR3/4 type you are using (I8 or FP8) |
+| `wayland`             | `PROTON_ENABLE_WAYLAND=1`,`PROTON_USE_WAYLAND=1`  | Enables the winewayland driver |
+| `sdlinput`            | `PROTON_USE_SDL=1`                                | Uses SDL2/3 for gamepad input instead of steam input (or hidraw) |
+| `nativeags`           | `PROTON_NATIVE_AGS=1`                             | Uses AMD's proprietary AMD GPU services binary instead of Proton built-in one and also enables useage of statically linked AMD GPU services. Useful to enable HDR in some UE4 DX11 games (on AMD). | 
+|                       | `PROTON_EMULATE_STEAMINPUT=1`                     | Emulate Steam Input hooks with SDL input. This does not emulate the ISteamInput interface used by a handful of games on Steam (https://partner.steamgames.com/doc/api/isteaminput). Emulation for that interface is beyond my scope, since it would just be easier to hack steam overlay to make it work on wayland native apps. |
+|                       | `FSR4_UPGRADE=1`                                  | Upgrade FSR3/4 to newer FSR4 (FP8 or I8) using AMD's FSR 4.1.1 amdxcffx64.dll taken from Proton Experimental. This option is not needed on RDNA2-4 discrete GPUs |
+|                       | `MLFG_UPGRADE=1`                                  | Enables FSR4 MLFG upgrade to use redstone frame generation. Can be used in tandom with FSR4-I8 on RDNA3 using `DXIL_SPIRV_CONFIG=wmma_rdna3_workaround`. |
+|                       | `FSR_WATERMARK=1`, `FSR_FG_WATERMARK=1`           | Enables watermarks for FSR Upscaling and FG. FG watermark is incorrect on 4.1.1 (reports MLFG even when FP8 is not supported). Upscaling watermark works correctly. You can use this to determine which FSR3/4 type you are using (I8 or FP8) |
 |                       | `WAYLANDDRV_PRIMARY_MONITOR`                      | Tell the wayland driver what the primary monitor name is (Example: `eDP-1`). This is a workaround for a missing Wayland Protocol. |
 | | `WAYLANDDRV_SSD=0` | Disable winewayland server side decorations implementation for debugging. |
 | | `WAYLANDDRV_SHORTCUT_INHIBIT=1` | Inhibit keyboard shortcuts on fullscreen apps. I use this on KDE when playing Overwatch to avoid KRunner from opening when I press `alt+space` |
