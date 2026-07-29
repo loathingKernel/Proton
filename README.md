@@ -95,6 +95,12 @@ When working on Proton-EM I choose to name tags in a certain way:
 | `EM-11.0-(i)-beta(j)`  | All features present, either known issues or needs testing |
 | `EM-11.0-(i)-rc(j)`    | Basically ready for release. Probably going through rebase and testing |
 
+## Contribution Policy
+
+The usage of AI or Large Language Models (LLM) is not allowed to generate or assist in generating code for Proton-EM. This decision is not one I made, but is required for me to enforce to allow the code in this project to make it to upstream sources. Note that using LLMs to look through logs/find potiential issues in logs is fine (I will probably just ignore it so don't waste your tokens). 
+
+TLDR: I may ignore your PR if I have suspicion that it was written by an LLM.
+
 ## Environment Variables
 
 | Compat config string  | Environment Variable               | Description  |
