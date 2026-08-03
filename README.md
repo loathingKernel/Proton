@@ -114,6 +114,7 @@ TLDR: I may ignore your PR if I have suspicion that it was written by an LLM.
 |                       | `FSR_WATERMARK=1`, `FSR_FG_WATERMARK=1`           | Enables watermarks for FSR Upscaling and FG. FG watermark is incorrect on 4.1.1 (reports MLFG even when FP8 is not supported). Upscaling watermark works correctly. You can use this to determine which FSR3/4 type you are using (I8 or FP8) |
 |                       | `WAYLANDDRV_PRIMARY_MONITOR`                      | Tell the wayland driver what the primary monitor name is (Example: `eDP-1`). This is a workaround for a missing Wayland Protocol. |
 | | `WAYLANDDRV_SSD=0` | Disable winewayland server side decorations implementation for debugging. |
+| | `WAYLANDDRV_IME=1` | Enables IME support. It is only disabled by default because many games don't even try to support IME properly, which causes issues for wayland. However, please enable it if you know that you need this feature and the game supports it. |
 | | `WAYLANDDRV_SHORTCUT_INHIBIT=1` | Inhibit keyboard shortcuts on fullscreen apps. I use this on KDE when playing Overwatch to avoid KRunner from opening when I press `alt+space` |
 | | `DXVK_NO_HDR=1`    | Disables automatic HDR support for debugging. |
 
