@@ -22,11 +22,17 @@ ifeq ($(3),$$(HOST_ARCH))
 	@echo ":: building $(1)-$(3)-tools..." >&2
 	+cd "$$($(2)_$(3)_OBJ)" && env $$($(2)_$(3)_ENV) \
 	$$(MAKE) __tooldeps__
+	+cd "$$($(2)_$(3)_OBJ)" && env $$($(2)_$(3)_ENV) \
+	$$(MAKE) nls/all
 endif
 	touch $$@
 
 $$(OBJ)/.$(1)-$(3)-build: $$(OBJ)/.$(1)-$(3)-tools
 
+$(1)-$(3)-tools-distclean::
+	rm -rf $$(OBJ)/.$(1)-$(3)-tools
+
+distclean: $(1)-$(3)-tools-distclean
 endif
 endef
 
