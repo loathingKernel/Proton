@@ -43,6 +43,7 @@ jobs:
     name: Build
     needs: version
     strategy:
+      fail-fast: false
       matrix:
         include:
           - name: proton-${{ needs.version.outputs.full_desc }}-x86_64
@@ -103,12 +104,12 @@ jobs:
       rustflags: ${{ matrix.rustflags }}
       configure: --enable-ccache ${{ matrix.configure }}
       runner: ${{ matrix.runner != '' && matrix.runner || 'ubuntu-24.04' }}
-      continue: true
 
   test:
     name: Test
     needs: [version, build]
     strategy:
+      fail-fast: false
       matrix:
         include:
           - name: proton-${{ needs.version.outputs.full_desc }}-x86_64
@@ -125,4 +126,3 @@ jobs:
     with:
       name: ${{ matrix.name }}
       runner: ${{ matrix.runner != '' && matrix.runner || 'ubuntu-24.04' }}
-      continue: true
